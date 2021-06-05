@@ -112,6 +112,7 @@
 
 [browser]
 ; [Base Browser Files]
+@BINPATH@/mozilla.cfg
 #ifndef XP_UNIX
 @BINPATH@/@MOZ_APP_NAME@.exe
 @BINPATH@/basilisk.VisualElementsManifest.xml
@@ -605,6 +606,9 @@
 @RESPATH@/browser/@PREF_DIR@/basilisk-branding.js
 @RESPATH@/goanna.js
 @RESPATH@/defaults/autoconfig/prefcalls.js
+
+@RESPATH@/browser/@PREF_DIR@/local-settings.js
+
 @RESPATH@/browser/defaults/permissions
 
 ; Warning: changing the path to channel-prefs.js can cause bugs (Bug 756325)

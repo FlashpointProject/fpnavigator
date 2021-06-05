@@ -3,8 +3,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-MOZ_APP_BASENAME=Basilisk
-MOZ_APP_VENDOR=Moonchild
+MOZ_APP_BASENAME=FPBrowser
+MOZ_APP_VENDOR=BlueMaxima Flashpoint
 MOZ_PHOENIX=1
 MOZ_AUSTRALIS=1
 MC_BASILISK=1
@@ -46,7 +46,7 @@ ACCEPTED_MAR_CHANNEL_IDS=unofficial,unstable,release
 MAR_CHANNEL_ID=unofficial
 
 # Features
-MOZ_PROFILE_MIGRATOR=1
+#MOZ_PROFILE_MIGRATOR=1
 MOZ_APP_STATIC_INI=1
 MOZ_WEBGL_CONFORMANT=1
 MOZ_JSDOWNLOADS=1

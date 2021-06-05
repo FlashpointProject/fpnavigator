@@ -15,9 +15,13 @@ SOURCES += [
     'nsBrowserApp.cpp',
 ]
 
+
+FINAL_TARGET_FILES['..'] += ['mozilla.cfg']
 FINAL_TARGET_FILES += ['blocklist.xml']
 FINAL_TARGET_FILES.defaults.profile += ['profile/prefs.js']
 FINAL_TARGET_FILES.defaults += ['permissions']
+
+FINAL_TARGET_FILES.defaults.pref += ['pref/local-settings.js']
 
 DEFINES['APP_VERSION'] = CONFIG['MOZ_APP_VERSION']
 
