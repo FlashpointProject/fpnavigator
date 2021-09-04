@@ -1,3 +1,4 @@
 [submodule "platform"]
 	path = platform
-url=https://repo.palemoon.org/MoonchildProductions/UXP.git
+    #url=https://repo.palemoon.org/MoonchildProductions/UXP.git
+    url=https://github.com/roytam1/UXP.git
