@@ -6,12 +6,12 @@
 @template
 def ApplicationBranding():
     JS_PREFERENCE_PP_FILES += [
-        'pref/basilisk-branding.js',
+        'pref/flashpoint-branding.js',
     ]
 
     if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         FINAL_TARGET_FILES['..'] += [
-            'basilisk.VisualElementsManifest.xml',
+            'flashpoint.VisualElementsManifest.xml',
         ]
         FINAL_TARGET_FILES.VisualElements += [
             'VisualElements_150.png',
