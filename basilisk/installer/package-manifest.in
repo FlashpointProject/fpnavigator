@@ -115,7 +115,7 @@
 @BINPATH@/mozilla.cfg
 #ifndef XP_UNIX
 @BINPATH@/@MOZ_APP_NAME@.exe
-@BINPATH@/flashpoint.VisualElementsManifest.xml
+@BINPATH@/flashpointbrowser.VisualElementsManifest.xml
 @BINPATH@/browser/VisualElements/VisualElements_150.png
 @BINPATH@/browser/VisualElements/VisualElements_70.png
 #else
