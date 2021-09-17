@@ -48,4 +48,4 @@ publish_x86:
     - C:\mozilla-build\start-shell-msvc2015.bat $env:CI_PROJECT_DIR\scripts\publish.sh
     - Move-Item -Path "$env:CI_PROJECT_DIR\obj-i686-pc-mingw32\dist\$filename.7z" -Destination "$env:CI_PROJECT_DIR\dist\$filename.7z"
     - '& "curl.exe" -s -u "${NEXUS_USERNAME}:${NEXUS_PASSWORD}" --upload-file "$env:CI_PROJECT_DIR\dist\$filename.7z" "https://${NEXUS_SERVER}/repository/${NEXUS_REPOSITORY}/${UPLOAD_PATH}/$filename.7z"'
-    - Remove-Item -Path "$env:CI_PROJECT_DIR\$filename.7z"
+    - Remove-Item -Path "$env:CI_PROJECT_DIR\dist\$filename.7z"
