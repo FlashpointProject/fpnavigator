@@ -16,6 +16,7 @@ build_x86:
     - git submodule update
   script:
     - $env:CI_COMMIT_MESSAGE=''
+    - $env:CI_COMMIT_DESCRIPTION=''
     - C:\mozilla-build\start-shell-msvc2015.bat $env:CI_PROJECT_DIR\scripts\build_windows_x86.sh
     - Move-Item -Path "$env:CI_PROJECT_DIR\obj-i686-pc-mingw32\dist\flashpointbrowser-*.7z" -Destination "$env:CI_PROJECT_DIR\dist\"
   artifacts:
