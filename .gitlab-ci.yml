@@ -8,6 +8,7 @@ variables:
 build_x86:
   tags: ["windows-mozbuild-priv"]
   stage: build
+  when: manual
   before_script:
     - mkdir dist -Force | Out-Null
     - Remove-Item "$env:CI_PROJECT_DIR\dist\*" -Recurse -Force | Out-Null
