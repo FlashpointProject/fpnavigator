@@ -8,10 +8,6 @@ pushd $ROOTDIR > /dev/null
 echo "Building Flashpoint Browser for x86"
 echo "$PWD"
 
-echo "Patching..."
-patch -t -ruN -p1 -i patches/001-fix-nsfilepicker-undefined-constant.patch
-echo "Patches complete!"
-
 export MOZCONFIG=$(PWD)/configs/mozconfig-windows_x86
 
 echo "Cleaning..."
