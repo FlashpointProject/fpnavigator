@@ -60,28 +60,24 @@ var TrackingProtection = {
     if (PrivateBrowsingUtils.isWindowPrivate(window)) {
       return;
     }
-    Services.telemetry.getHistogramById("TRACKING_PROTECTION_ENABLED").add(value);
   },
 
   disabledPBMHistogramAdd(value) {
     if (PrivateBrowsingUtils.isWindowPrivate(window)) {
       return;
     }
-    Services.telemetry.getHistogramById("TRACKING_PROTECTION_PBM_DISABLED").add(value);
   },
 
   eventsHistogramAdd(value) {
     if (PrivateBrowsingUtils.isWindowPrivate(window)) {
       return;
     }
-    Services.telemetry.getHistogramById("TRACKING_PROTECTION_EVENTS").add(value);
   },
 
   shieldHistogramAdd(value) {
     if (PrivateBrowsingUtils.isWindowPrivate(window)) {
       return;
     }
-    Services.telemetry.getHistogramById("TRACKING_PROTECTION_SHIELD").add(value);
   },
 
   onSecurityChange(state, isSimulated) {
