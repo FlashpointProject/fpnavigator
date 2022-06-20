@@ -57,7 +57,7 @@ When finished you will get a new folder named `obj*` that contains the finished 
 To build for Mac you need to setup a proper build environment. You need will the following toolset listed below which are going to be installed following this short guide.
 
 - OS X 10.13 (HighSierra)
-- Xcode 8 + Command-line tools for Xcode
+- Xcode 8 (Or higher) + Command-line tools for Xcode
 - Apple 10.13 SDK
 - Autoconf-2.13
 - ccache
