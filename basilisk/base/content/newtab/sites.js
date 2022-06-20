@@ -273,7 +273,6 @@ Site.prototype = {
    * Record interaction with site using telemetry.
    */
   _recordSiteClicked: function(aIndex) {
-    return;
     if (Services.prefs.prefHasUserValue("browser.newtabpage.rows") ||
         Services.prefs.prefHasUserValue("browser.newtabpage.columns") ||
         aIndex > 8) {
