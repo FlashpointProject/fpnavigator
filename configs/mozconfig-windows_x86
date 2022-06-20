@@ -1,13 +1,11 @@
 ac_add_options --target=i686-pc-mingw32
 ac_add_options --host=i686-pc-mingw32
 
-ac_add_options --enable-optimize="-O2"
+ac_add_options --enable-optimize="-O2 -GS-"
 
 # Browser branding
 ac_add_options --enable-application=basilisk
-ac_add_options --disable-updater
 ac_add_options --with-branding=basilisk/branding/flashpoint
-ac_add_options --with-pthreads
 
 export MOZ_USER_DIR="fpbrowser"
 export MOZ_APP_VENDOR="BlueMaxima Flashpoint"
@@ -17,22 +15,13 @@ export MOZ_APP_DISPLAYNAME="FPBrowser"
 export MOZ_MACBUNDLE_ID=org.bluemaxima.fpbrowser
 export MOZ_DISTRIBUTION_ID=org.bluemaxima.fpbrowser
 
-# Disable add-ons signing
-# Disable checking that add-ons are signed by the trusted root
-export MOZ_ADDON_SIGNING=
-# Disable enforcing that add-ons are signed by the trusted root
-export MOZ_REQUIRE_SIGNING=
-
-# Disable telemetry and tracking
-mk_add_options MOZ_TELEMETRY_REPORTING=
-mk_add_options MOZ_DATA_REPORTING=
-
 # Set up the basilisk extension app version
 export BASILISK_VERSION=1
 
 # Features
 ac_add_options --enable-jemalloc
 ac_add_options --enable-strip
+ac_add_options --enable-devtools
 ac_add_options --disable-accessibility
 ac_add_options --disable-crashreporter
 ac_add_options --disable-debug
