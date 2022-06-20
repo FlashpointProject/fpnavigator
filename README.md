@@ -89,7 +89,9 @@ brew install automake ccache libidl libtool python@2
 Now bootstrap the environment by running the following command in the cloned directory where FPBrowser lives. This will fetch the necessary build tools required.
 (Note that this will take a long time as pre-built packages may not be available and all the tools need to be compiled from source)
 
+You will have to apply a patch first to fix boostraping on Mac.
 ```bash
+patch < patches/001-fix-mach-bootstrap-on-osx.patch
 ./mach bootstrap
 ```
 
