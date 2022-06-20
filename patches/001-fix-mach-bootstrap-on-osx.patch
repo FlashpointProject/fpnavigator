@@ -1,0 +1,92 @@
+diff --git a/platform/python/mozboot/mozboot/osx.py b/platform/python/mozboot/mozboot/osx.py
+index d66d66d6b8..1b520f4c1f 100644
+--- a/platform/python/mozboot/mozboot/osx.py
++++ b/platform/python/mozboot/mozboot/osx.py
+@@ -21,7 +21,6 @@ from mozboot.base import BaseBootstrapper
+ HOMEBREW_BOOTSTRAP = 'https://raw.githubusercontent.com/Homebrew/install/master/install'
+ XCODE_APP_STORE = 'macappstore://itunes.apple.com/app/id497799835?mt=12'
+ XCODE_LEGACY = 'https://developer.apple.com/downloads/download.action?path=Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg'
+-HOMEBREW_AUTOCONF213 = 'https://raw.github.com/Homebrew/homebrew-versions/master/autoconf213.rb'
+ 
+ MACPORTS_URL = {'11': 'https://distfiles.macports.org/MacPorts/MacPorts-2.3.4-10.11-ElCapitan.pkg',
+                 '10': 'https://distfiles.macports.org/MacPorts/MacPorts-2.3.4-10.10-Yosemite.pkg',
+@@ -291,8 +290,8 @@ class OSXBootstrapper(BaseBootstrapper):
+ 
+         printed = False
+ 
+-        for name, package in packages:
+-            if name in installed:
++        for package in packages:
++            if package in installed:
+                 continue
+ 
+             if not printed:
+@@ -309,24 +308,18 @@ class OSXBootstrapper(BaseBootstrapper):
+ 
+     def ensure_homebrew_system_packages(self):
+         packages = [
+-            # We need to install Python because Mercurial requires the Python
+-            # development headers which are missing from OS X (at least on
+-            # 10.8) and because the build system wants a version newer than
+-            # what Apple ships.
+-            ('python', 'python'),
+-            ('mercurial', 'mercurial'),
+-            ('git', 'git'),
+-            ('autoconf213', HOMEBREW_AUTOCONF213),
+-            ('gnu-tar', 'gnu-tar'),
+-            ('watchman', 'watchman',),
+-            ('terminal-notifier', 'terminal-notifier')
++            'git',
++            'autoconf@2.13',
++            'gnu-tar',
++            'terminal-notifier',
+         ]
+         self._ensure_homebrew_packages(packages)
+ 
+     def ensure_homebrew_browser_packages(self, artifact_mode=False):
+         # TODO: Figure out what not to install for artifact mode
+         packages = [
+-            ('yasm', 'yasm'),
++            'llvm@9',
++            'yasm'
+         ]
+         self._ensure_homebrew_packages(packages)
+ 
+@@ -347,13 +340,12 @@ class OSXBootstrapper(BaseBootstrapper):
+ 
+         # 1. System packages.
+         packages = [
+-            ('brew-cask', 'caskroom/cask/brew-cask'),  # For installing Java later.
+-            ('wget', 'wget'),
++            'wget'
+         ]
+         self._ensure_homebrew_packages(packages)
+ 
+         casks = [
+-            ('java', 'java'),
++            'java'
+         ]
+         installed = self._ensure_homebrew_casks(casks)
+         if installed:
+@@ -402,7 +394,7 @@ class OSXBootstrapper(BaseBootstrapper):
+     def ensure_macports_system_packages(self):
+         packages = [
+             'python27',
+-            'py27-readline',
++            'py27-gnureadline',
+             'mercurial',
+             'autoconf213',
+             'gnutar',
+@@ -414,7 +406,11 @@ class OSXBootstrapper(BaseBootstrapper):
+ 
+     def ensure_macports_browser_packages(self, artifact_mode=False):
+         # TODO: Figure out what not to install for artifact mode
+-        packages = ['yasm']
++        packages = [
++            'yasm',
++            'llvm-9.0',
++            'clang-9.0',
++        ]
+ 
+         self._ensure_macports_packages(packages)
+ 

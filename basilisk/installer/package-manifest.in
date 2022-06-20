@@ -112,7 +112,12 @@
 
 [browser]
 ; [Base Browser Files]
+#ifdef XP_WIN32
 @BINPATH@/mozilla.cfg
+#endif
+#ifdef XP_MACOSX
+@RESPATH@/mozilla.cfg
+#endif
 #ifndef XP_UNIX
 @BINPATH@/@MOZ_APP_NAME@.exe
 @BINPATH@/flashpointbrowser.VisualElementsManifest.xml

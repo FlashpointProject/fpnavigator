@@ -143,7 +143,7 @@
 		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
-	<string>fpbrowser</string>
+	<string>flashpointbrowser</string>
 	<key>CFBundleGetInfoString</key>
 	<string>%MAC_APP_NAME% %APP_VERSION%</string>
 	<key>CFBundleIconFile</key>
@@ -209,15 +209,26 @@
 	<dict>
 		<key>MallocNanoZone</key>
 		<string>0</string>
+		<key>SYSTEM_VERSION_COMPAT</key>
+		<string>0</string>
 	</dict>
 	<key>LSFileQuarantineEnabled</key>
 	<true/>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.7.0</string>
-  <key>NSSupportsAutomaticGraphicsSwitching</key>
-  <true/>
-  <key>NSPrincipalClass</key>
-  <string>GeckoNSApplication</string>
+	<string>10.7</string>
+	<key>LSMinimumSystemVersionByArchitecture</key>
+	<dict>
+		<key>i386</key>
+		<string>10.7.0</string>
+		<key>x86_64</key>
+		<string>10.7.0</string>
+	</dict>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
+	<key>NSRequiresAquaSystemAppearance</key>
+	<true/>
+	<key>NSPrincipalClass</key>
+  	<string>GeckoNSApplication</string>
 	<key>SMPrivilegedExecutables</key>
 	<dict>
 		<key>org.mozilla.updater</key>
