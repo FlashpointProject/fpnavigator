@@ -17,6 +17,5 @@
      resultdomain="yahoo.com" rel="searchform">
   <Param name="p" value="{searchTerms}"/>
   <Param name="ei" value="UTF-8"/>
-  <Param name="hspart" value="palemoon"/>
 </Url>
 </SearchPlugin>

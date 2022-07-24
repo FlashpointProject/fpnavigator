@@ -2,9 +2,9 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY  brandShorterName      "FPBrowser">
-<!ENTITY  brandShortName        "FPBrowser">
-<!ENTITY  brandFullName         "FlashpointBrowser">
-<!ENTITY  vendorShortName       "BlueMaxima">
+<!ENTITY  brandShorterName      "Flashpoint Navigator">
+<!ENTITY  brandShortName        "Flashpoint Navigator">
+<!ENTITY  brandFullName         "Flashpoint Navigator">
+<!ENTITY  vendorShortName       "Flashpoint">
 <!ENTITY  vendorFullName        "BlueMaxima Flashpoint">
 <!ENTITY  trademarkInfo.part1   " ">

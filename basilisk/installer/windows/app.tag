@@ -1,4 +1,4 @@
 ;!@Install@!UTF-8!
-Title="FPBrowser"
+Title="flashpointnavigator"
 RunProgram="setup.exe"
 ;!@InstallEnd@!
