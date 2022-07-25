@@ -29,7 +29,7 @@ publish_win-x86:
   only:
     - tags
   dependencies:
-    - build_x86
+    - build_win-x86
   tags: ["windows-mozbuild-priv"]
   variables:
     GIT_STRATEGY: fetch
