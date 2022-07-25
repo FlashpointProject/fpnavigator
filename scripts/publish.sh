@@ -5,8 +5,10 @@ ROOTDIR="$(dirname "$SCRIPTPATH")"
 
 pushd $ROOTDIR > /dev/null
 
-echo "Packaging Flashpoint Browser..."
+echo "Packaging Flashpoint Navigator..."
 echo "$PWD"
+
+export MOZCONFIG=$(PWD)/configs/mozconfig-windows_x86
 
 echo "Configuring..."
 mach configure

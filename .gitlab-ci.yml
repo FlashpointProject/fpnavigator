@@ -5,7 +5,7 @@ stages:
 variables:
   VAULT_ADDR: "https://vault.fp.unstable.life"
 
-build_x86:
+build_win-x86:
   tags: ["windows-mozbuild-priv"]
   stage: build
   when: manual
@@ -18,13 +18,13 @@ build_x86:
     - $env:CI_COMMIT_MESSAGE=''
     - $env:CI_COMMIT_DESCRIPTION=''
     - C:\mozilla-build\start-shell-msvc2015.bat $env:CI_PROJECT_DIR\scripts\build_windows_x86.sh
-    - Move-Item -Path "$env:CI_PROJECT_DIR\obj-i686-pc-mingw32\dist\flashpointbrowser-*.7z" -Destination "$env:CI_PROJECT_DIR\dist\"
+    - Move-Item -Path "$env:CI_PROJECT_DIR\obj-i686-pc-mingw32\dist\flashpointnavigator-*.7z" -Destination "$env:CI_PROJECT_DIR\dist\"
   artifacts:
     expire_in: 1 week
     paths:
-      - dist/flashpointbrowser*.7z
+      - dist/flashpointnavigator*.7z
 
-publish_x86:
+publish_win-x86:
   stage: publish
   only:
     - tags
@@ -41,10 +41,9 @@ publish_x86:
     - $NEXUS_PASSWORD = (vault.exe kv get -field=password flashpoint/nexus)
     - $NEXUS_SERVER = (vault.exe kv get -field=server flashpoint/nexus)
     - $NEXUS_REPOSITORY = "flashpoint-dependency-software"
-    - $UPLOAD_PATH = "FlashpointBrowser"
-    - $filename = "rel-FlashpointBrowser-win-x86-release-$CI_COMMIT_TAG"
+    - $UPLOAD_PATH = "FlashpointNavigator"
+    - $filename = "FlashpointNavigator-win-x86-release-$CI_COMMIT_TAG"
     - $env:MOZ_SIMPLE_PACKAGE_NAME = $filename
-    - $env:MOZCONFIG = "$env:CI_PROJECT_DIR\configs\mozconfig-windows_x86"
     - $env:CI_COMMIT_MESSAGE=''
     - C:\mozilla-build\start-shell-msvc2015.bat $env:CI_PROJECT_DIR\scripts\publish.sh
     - Move-Item -Path "$env:CI_PROJECT_DIR\obj-i686-pc-mingw32\dist\$filename.7z" -Destination "$env:CI_PROJECT_DIR\dist\$filename.7z"

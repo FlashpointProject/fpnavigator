@@ -1,7 +1,7 @@
 ac_add_options --target=i686-pc-mingw32
 ac_add_options --host=i686-pc-mingw32
 
-ac_add_options --with-ccache=C:/Users/packer/scoop/apps/sccache/current/sccache.exe
+#ac_add_options --with-ccache=C:/Users/packer/scoop/apps/sccache/current/sccache.exe
 
 mk_add_options MOZ_MAKE_FLAGS="-j8"
 
