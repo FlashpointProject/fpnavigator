@@ -148,12 +148,6 @@
 #endif
 
 ; [Components]
-#ifdef MOZ_ARTIFACT_BUILDS
-@RESPATH@/components/prebuilt-interfaces.manifest
-@RESPATH@/components/interfaces.xpt
-@RESPATH@/browser/components/prebuilt-interfaces.manifest
-@RESPATH@/browser/components/interfaces.xpt
-#endif
 @RESPATH@/browser/components/components.manifest
 @RESPATH@/components/alerts.xpt
 #ifdef ACCESSIBILITY
@@ -432,8 +426,6 @@
 @RESPATH@/components/PlacesCategoriesStarter.js
 @RESPATH@/components/ColorAnalyzer.js
 @RESPATH@/components/PageThumbsProtocol.js
-@RESPATH@/components/mozProtocolHandler.js
-@RESPATH@/components/mozProtocolHandler.manifest
 @RESPATH@/components/nsDefaultCLH.manifest
 @RESPATH@/components/nsDefaultCLH.js
 @RESPATH@/components/nsContentPrefService.manifest
@@ -539,19 +531,9 @@
 @RESPATH@/browser/modules/*
 @RESPATH@/modules/*
 
-#ifdef MOZ_URL_CLASSIFIER
-; Safe Browsing
-@RESPATH@/components/nsURLClassifier.manifest
-@RESPATH@/components/nsUrlClassifierHashCompleter.js
-@RESPATH@/components/nsUrlClassifierListManager.js
-@RESPATH@/components/nsUrlClassifierLib.js
-@RESPATH@/components/url-classifier.xpt
-#endif
-
 ; Private Browsing
 @RESPATH@/components/privatebrowsing.xpt
 @RESPATH@/components/PrivateBrowsing.manifest
-@RESPATH@/components/PrivateBrowsingTrackingProtectionWhitelist.js
 
 ; ANGLE GLES-on-D3D rendering library
 #ifdef MOZ_ANGLE_RENDERER
@@ -690,9 +672,6 @@
 #endif
 @BINPATH@/@DLL_PREFIX@nss3@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@nssckbi@DLL_SUFFIX@
-#ifndef NSS_DISABLE_DBM
-@BINPATH@/@DLL_PREFIX@nssdbm3@DLL_SUFFIX@
-#endif
 #ifndef MOZ_FOLD_LIBS
 @BINPATH@/@DLL_PREFIX@nssutil3@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@smime3@DLL_SUFFIX@

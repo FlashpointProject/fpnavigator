@@ -398,7 +398,6 @@
               if (!aEngine) {
                 aEngine = this.currentEngine;
               }
-
             }
           }
 
@@ -1938,7 +1937,6 @@
                               aOpenUILinkParams &&
                               aOpenUILinkParams.inBackground;
           let where = tabBackground ? "tab-background" : aOpenUILinkWhere;
-
           return true;
         ]]></body>
       </method>
