@@ -1,1 +1,10 @@
 * -text
+
+# Prefer local Flashpoint branding during merges
+basilisk/branding/flashpoint/** merge=ours
+
+# Keep local app identifiers and license overrides
+basilisk/app/application.ini merge=ours
+basilisk/app/module.ver merge=ours
+basilisk/base/content/aboutDialog.xul merge=ours
+basilisk/base/content/overrides/app-license.html merge=ours
