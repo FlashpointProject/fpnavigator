@@ -2,7 +2,7 @@
 _BUILD_64=
 
 # Set GTK Version to 2 or 3
-_GTK_VERSION=3
+_GTK_VERSION=2
 
 # Set Basilisk version to date timestamp
 export BASILISK_VERSION=1
@@ -20,7 +20,6 @@ ac_add_options --enable-strip
 ac_add_options --enable-devtools
 ac_add_options --enable-av1
 ac_add_options --enable-jxl
-ac_add_options --enable-eme
 ac_add_options --enable-webrtc
 ac_add_options --enable-gamepad
 ac_add_options --disable-tests
@@ -30,6 +29,7 @@ ac_add_options --disable-updater
 ac_add_options --with-pthreads
 ac_add_options --disable-gconf
 ac_add_options --enable-pie
+
 
 ac_add_options --target=i686-pc-linux-gnu
 

@@ -11,7 +11,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/debug.js");
-Cu.import("resource://gre/modules/AppConstants.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
   "resource://gre/modules/AsyncShutdown.jsm");
@@ -141,7 +140,11 @@ const LOCALE_PREF = "general.useragent.locale";
 const USER_DEFINED = "{searchTerms}";
 
 // Custom search parameters
-const MOZ_OFFICIAL = AppConstants.MOZ_OFFICIAL_BRANDING ? "official" : "unofficial";
+#ifdef MOZ_OFFICIAL_BRANDING
+const MOZ_OFFICIAL = "official";
+#else
+const MOZ_OFFICIAL = "unofficial";
+#endif
 
 const MOZ_PARAM_LOCALE         = /\{moz:locale\}/g;
 const MOZ_PARAM_DIST_ID        = /\{moz:distributionID\}/g;
@@ -232,13 +235,13 @@ function DO_LOG(aText) {
  */
 var LOG = function() {};
 
-if (AppConstants.DEBUG) {
-  LOG = function (aText) {
-    if (Services.prefs.getBoolPref(BROWSER_SEARCH_PREF + "log", false)) {
-      DO_LOG(aText);
-    }
-  };
-}
+#ifdef DEBUG
+LOG = function (aText) {
+  if (Services.prefs.getBoolPref(BROWSER_SEARCH_PREF + "log", false)) {
+    DO_LOG(aText);
+  }
+};
+#endif
 
 /**
  * Presents an assertion dialog in non-release builds and throws.
@@ -1798,24 +1801,6 @@ Engine.prototype = {
         uri = gChromeReg.convertChromeURL(uri);
       }
 
-      if (AppConstants.platform == "android") {
-        // On Android the omni.ja file isn't at the same path as the binary
-        // used to start the process. We tweak the path here so that the code
-        // shared with Desktop will correctly identify files from the omni.ja
-        // file as coming from the [app] folder.
-        let appPath = Services.io.getProtocolHandler("resource")
-                              .QueryInterface(Ci.nsIResProtocolHandler)
-                              .getSubstitution("android");
-        if (appPath) {
-          appPath = appPath.spec;
-          let spec = uri.spec;
-          if (spec.includes(appPath)) {
-            let appURI = Services.io.newFileURI(getDir(knownDirs["app"]));
-            uri = NetUtil.newURI(spec.replace(appPath, appURI.spec));
-          }
-        }
-      }
-
       if (uri instanceof Ci.nsINestedURI) {
         prefix = "jar:";
         suffix = "!" + packageName + "/" + leafName;
@@ -1989,8 +1974,7 @@ Engine.prototype = {
   // from nsISearchEngine
   getSubmission: function(aData, aResponseType, aPurpose) {
     if (!aResponseType) {
-      aResponseType = AppConstants.platform == "android" ? this._defaultMobileResponseType :
-                                                           URLTYPE_SEARCH_HTML;
+      aResponseType = URLTYPE_SEARCH_HTML;
     }
 
     if (aResponseType == URLTYPE_SEARCH_HTML &&
@@ -2042,8 +2026,7 @@ Engine.prototype = {
   // from nsISearchEngine
   getResultDomain: function(aResponseType) {
     if (!aResponseType) {
-      aResponseType = AppConstants.platform == "android" ? this._defaultMobileResponseType :
-                                                           URLTYPE_SEARCH_HTML;
+      aResponseType = URLTYPE_SEARCH_HTML;
     }
 
     LOG("getResultDomain: responseType: \"" + aResponseType + "\"");
@@ -2058,8 +2041,7 @@ Engine.prototype = {
    * Returns URL parsing properties used by _buildParseSubmissionMap.
    */
   getURLParsingInfo: function () {
-    let responseType = AppConstants.platform == "android" ? this._defaultMobileResponseType :
-                                                            URLTYPE_SEARCH_HTML;
+    let responseType = URLTYPE_SEARCH_HTML;
 
     LOG("getURLParsingInfo: responseType: \"" + responseType + "\"");
 

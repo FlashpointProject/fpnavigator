@@ -342,7 +342,7 @@
 @RESPATH@/components/WellKnownOpportunisticUtils.js
 @RESPATH@/components/WellKnownOpportunisticUtils.manifest
 #ifndef XP_MACOSX
-; OSX uses native platform impl.  Windows, Linux, and Android uses fallback JS impl.
+; OSX uses native platform impl. Windows and Linux use fallback JS impl.
 @BINPATH@/components/nsDNSServiceDiscovery.manifest
 @BINPATH@/components/nsDNSServiceDiscovery.js
 #endif
@@ -459,7 +459,6 @@
 @RESPATH@/browser/components/ChromeProfileMigrator.js
 @RESPATH@/browser/components/FirefoxProfileMigrator.js
 #ifdef XP_WIN
-@RESPATH@/browser/components/360seProfileMigrator.js
 @RESPATH@/browser/components/EdgeProfileMigrator.js
 @RESPATH@/browser/components/IEProfileMigrator.js
 #endif
@@ -660,7 +659,7 @@
 ; meaning their .chk files are created there directly.
 ;
 #ifndef MOZ_SYSTEM_NSS
-#if defined(XP_LINUX) && !defined(ANDROID)
+#if defined(XP_LINUX)
 @BINPATH@/@DLL_PREFIX@freeblpriv3@DLL_SUFFIX@
 #elif defined(XP_SOLARIS) && defined(SPARC64)
 @BINPATH@/@DLL_PREFIX@freebl_64fpu_3@DLL_SUFFIX@
@@ -709,13 +708,6 @@
 
 #if defined(MOZ_ASAN) && defined(XP_WIN)
 @BINPATH@/clang_rt.asan_dynamic-*.dll
-#endif
-
-
-; media
-#ifdef MOZ_EME
-@RESPATH@/gmp-clearkey/0.1/@DLL_PREFIX@clearkey@DLL_SUFFIX@
-@RESPATH@/gmp-clearkey/0.1/clearkey.info
 #endif
 
 ; gfx
