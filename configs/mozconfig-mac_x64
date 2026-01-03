@@ -12,13 +12,13 @@ ac_add_options --enable-optimize="-O2 -GS-"
 ac_add_options --enable-application=basilisk
 ac_add_options --with-branding=basilisk/branding/flashpoint
 
-export MOZ_USER_DIR="fpbrowser"
-export MOZ_APP_VENDOR="BlueMaxima Flashpoint"
-export MOZ_APP_BASENAME=FPBrowser
-export MOZ_APP_PROFILE=fpbrowser
-export MOZ_APP_DISPLAYNAME="FPBrowser"
-export MOZ_MACBUNDLE_ID=org.bluemaxima.fpbrowser
-export MOZ_DISTRIBUTION_ID=org.bluemaxima.fpbrowser
+export MOZ_USER_DIR="fpnavigator"
+export MOZ_APP_VENDOR="Flashpoint Archive"
+export MOZ_APP_BASENAME=FPNavigator
+export MOZ_APP_PROFILE=fpnavigator
+export MOZ_APP_DISPLAYNAME="FPNavigator"
+export MOZ_MACBUNDLE_ID=org.flashpointarchive.fpnavigator
+export MOZ_DISTRIBUTION_ID=org.flashpointarchive.fpnavigator
 
 # Set up the basilisk extension app version
 export BASILISK_VERSION=1

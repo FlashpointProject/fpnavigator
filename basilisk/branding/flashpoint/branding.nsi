@@ -9,8 +9,8 @@
 # BrandFullNameInternal is used for some registry and file system values
 # instead of BrandFullName and typically should not be modified.
 !define BrandFullNameInternal "Flashpoint Navigator"
-!define CompanyName           "BlueMaxima Flashpoint"
-!define URLInfoAbout          "https://bluemaxima.org/flashpoint"
-!define URLUpdateInfo         "https://bluemaxima.org/flashpoint"
-!define HelpLink              "https://bluemaxima.org/flashpoint"
-!define URLSystemRequirements "https://bluemaxima.org/flashpoint"
+!define CompanyName           "Flashpoint Archive"
+!define URLInfoAbout          "https://flashpointarchive.org/"
+!define URLUpdateInfo         "https://flashpointarchive.org/"
+!define HelpLink              "https://flashpointarchive.org/"
+!define URLSystemRequirements "https://flashpointarchive.org/"
