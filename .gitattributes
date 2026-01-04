@@ -1,1 +1,17 @@
 * -text
+
+# Prefer local Flashpoint branding during merges
+basilisk/branding/flashpoint/** merge=ours
+
+# Keep local app identifiers and license overrides
+basilisk/app/application.ini merge=ours
+basilisk/app/module.ver merge=ours
+basilisk/base/content/aboutDialog.xul merge=ours
+basilisk/base/content/overrides/app-license.html merge=ours
+
+# Preserve Flashpoint-specific config settings
+basilisk/confvars.sh merge=ours
+
+# Keep Flashpoint installer customizations
+basilisk/installer/windows/nsis/defines.nsi.in merge=ours
+basilisk/installer/windows/nsis/shared.nsh merge=ours

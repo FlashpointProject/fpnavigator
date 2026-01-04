@@ -5,6 +5,8 @@
 
 JAR_MANIFESTS += ['jar.mn']
 
+DEFINES['MOZ_APP_NAME'] = CONFIG['MOZ_APP_NAME']
+
 XPIDL_SOURCES += [
     'nsIBrowserProfileMigrator.idl',
 ]
@@ -12,41 +14,17 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'migration'
 
 EXTRA_COMPONENTS += [
-    'ChromeProfileMigrator.js',
+    'BrowserProfileMigrators.manifest',
     'FirefoxProfileMigrator.js',
     'ProfileMigrator.js',
 ]
 
-EXTRA_PP_COMPONENTS += [
-    'BrowserProfileMigrators.manifest',
-]
-
 EXTRA_JS_MODULES += [
     'AutoMigrate.jsm',
-    'MigrationUtils.jsm',
 ]
 
-if CONFIG['OS_ARCH'] == 'WINNT':
-    SOURCES += [
-        'nsIEHistoryEnumerator.cpp',
-    ]
-    EXTRA_COMPONENTS += [
-        '360seProfileMigrator.js',
-        'EdgeProfileMigrator.js',
-        'IEProfileMigrator.js',
-    ]
-    EXTRA_JS_MODULES += [
-        'ESEDBReader.jsm',
-        'MSMigrationUtils.jsm',
-    ]
-    DEFINES['HAS_360SE_MIGRATOR'] = True
-    DEFINES['HAS_IE_MIGRATOR'] = True
-    DEFINES['HAS_EDGE_MIGRATOR'] = True
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
-    EXTRA_COMPONENTS += [
-        'SafariProfileMigrator.js',
-    ]
-    DEFINES['HAS_SAFARI_MIGRATOR'] = True
+EXTRA_PP_JS_MODULES += [
+    'MigrationUtils.jsm',
+]
 
 FINAL_LIBRARY = 'browsercomps'

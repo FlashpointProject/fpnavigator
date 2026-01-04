@@ -181,8 +181,7 @@ var StarUI = {
         }
         // auto-close if new and not interacted with
         if (this._isNewBookmark && !this._isComposing) {
-          // 3500ms matches the timeout that Pocket uses in
-          // browser/extensions/pocket/content/panels/js/saved.js
+          // 3500ms chosen for consistency with other UI elements
           let delay = 3500;
           if (this._closePanelQuickForTesting) {
             delay /= 10;
@@ -642,8 +641,9 @@ var PlacesCommandHook = {
   updateBookmarkAllTabsCommand:
   function PCH_updateBookmarkAllTabsCommand() {
     // There's nothing to do in non-browser windows.
-    if (window.location.href != getBrowserURL())
+    if (!window.location || window.location.href != getBrowserURL()) { 
       return;
+    }
 
     // Disable "Bookmark All Tabs" if there are less than two
     // "unique current pages".
@@ -717,8 +717,22 @@ function HistoryMenu(aPopupShowingEvent) {
   // Defining the prototype inheritance in the prototype itself would cause
   // browser.js to halt on "PlacesMenu is not defined" error.
   this.__proto__.__proto__ = PlacesMenu.prototype;
-  PlacesMenu.call(this, aPopupShowingEvent,
-                  "place:sort=4&maxResults=15");
+  let maxResults = Services.prefs.getIntPref("browser.history.menuMaxResults", 15);
+  if (maxResults < 0) {
+    Components.utils.reportError("Maximum number of history menu entries is invalid! Using defaults.");
+    maxResults = 15;
+  }
+  if (maxResults > 0) {
+    if (maxResults > 50) {
+      // Return to sanity...
+      Components.utils.reportError("Maximum number of history menu entries is too large! Capping to 50.");
+      maxResults = 50;
+    }
+    PlacesMenu.call(this, aPopupShowingEvent,
+                    "place:sort=4&maxResults=" + maxResults.toString().trim());
+  } else {
+    // maxResults == 0; do nothing. This suppresses the history entries.
+  }
 }
 
 HistoryMenu.prototype = {
@@ -869,11 +883,11 @@ var BookmarksEventHandler = {
   onClick: function(aEvent, aView) {
     // Only handle middle-click or left-click with modifiers.
     let modifKey;
-    if (AppConstants.platform == "macosx") {
-      modifKey = aEvent.metaKey || aEvent.shiftKey;
-    } else {
-      modifKey = aEvent.ctrlKey || aEvent.shiftKey;
-    }
+#ifdef XP_MACOSX
+    modifKey = aEvent.metaKey || aEvent.shiftKey;
+#else
+    modifKey = aEvent.ctrlKey || aEvent.shiftKey;
+#endif
 
     if (aEvent.button == 2 || (aEvent.button == 0 && !modifKey))
       return;

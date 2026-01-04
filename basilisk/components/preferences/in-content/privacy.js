@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-Components.utils.import("resource://gre/modules/AppConstants.jsm");
 Components.utils.import("resource://gre/modules/PluralForm.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
@@ -19,37 +18,6 @@ var gPrivacyPane = {
    * Whether the prompt to restart Firefox should appear when changing the autostart pref.
    */
   _shouldPromptForRestart: true,
-
-#ifdef MOZ_SAFE_BROWSING
-  /**
-   * Show the Tracking Protection UI depending on the
-   * privacy.trackingprotection.ui.enabled pref, and linkify its Learn More link
-   */
-  _initTrackingProtection: function () {
-    if (!Services.prefs.getBoolPref("privacy.trackingprotection.ui.enabled")) {
-      return;
-    }
-
-    let link = document.getElementById("trackingProtectionLearnMore");
-    let url = Services.urlFormatter.formatURLPref("app.support.baseURL") + "tracking-protection";
-    link.setAttribute("href", url);
-
-    this.trackingProtectionReadPrefs();
-
-    document.getElementById("trackingprotectionbox").hidden = false;
-    document.getElementById("trackingprotectionpbmbox").hidden = true;
-  },
-
-  /**
-   * Linkify the Learn More link of the Private Browsing Mode Tracking
-   * Protection UI.
-   */
-  _initTrackingProtectionPBM: function () {
-    let link = document.getElementById("trackingProtectionPBMLearnMore");
-    let url = Services.urlFormatter.formatURLPref("app.support.baseURL") + "tracking-protection-pbm";
-    link.setAttribute("href", url);
-  },
-#endif
 
   /**
    * Initialize autocomplete to ensure prefs are in sync.
@@ -76,10 +44,6 @@ var gPrivacyPane = {
     this.updateHistoryModePane();
     this.updatePrivacyMicroControls();
     this.initAutoStartPrivateBrowsingReverter();
-#ifdef MOZ_SAFE_BROWSING
-    this._initTrackingProtection();
-    this._initTrackingProtectionPBM();
-#endif
     this._initAutocomplete();
 
     setEventListener("privacy.sanitize.sanitizeOnShutdown", "change",
@@ -104,12 +68,6 @@ var gPrivacyPane = {
       gPrivacyPane.clearPrivateDataNow(true);
       return false;
     });
-#ifdef MOZ_SAFE_BROWSING
-    setEventListener("doNotTrackSettings", "click", function () {
-      gPrivacyPane.showDoNotTrackSettings();
-      return false;
-    });
-#endif
     setEventListener("privateBrowsingAutoStart", "command",
                      gPrivacyPane.updateAutostart);
     setEventListener("cookieExceptions", "command",
@@ -118,63 +76,7 @@ var gPrivacyPane = {
                      gPrivacyPane.showCookies);
     setEventListener("clearDataSettings", "command",
                      gPrivacyPane.showClearPrivateDataSettings);
-#ifdef MOZ_SAFE_BROWSING
-    setEventListener("trackingProtectionRadioGroup", "command",
-                     gPrivacyPane.trackingProtectionWritePrefs);
-    setEventListener("trackingProtectionExceptions", "command",
-                     gPrivacyPane.showTrackingProtectionExceptions);
-    setEventListener("changeBlockList", "command",
-                     gPrivacyPane.showBlockLists);
-    setEventListener("changeBlockListPBM", "command",
-                     gPrivacyPane.showBlockLists);
-#endif
   },
-
-#ifdef MOZ_SAFE_BROWSING
-  // TRACKING PROTECTION MODE
-
-  /**
-   * Selects the right item of the Tracking Protection radiogroup.
-   */
-  trackingProtectionReadPrefs() {
-    let enabledPref = document.getElementById("privacy.trackingprotection.enabled");
-    let pbmPref = document.getElementById("privacy.trackingprotection.pbmode.enabled");
-    let radiogroup = document.getElementById("trackingProtectionRadioGroup");
-
-    // Global enable takes precedence over enabled in Private Browsing.
-    if (enabledPref.value) {
-      radiogroup.value = "always";
-    } else if (pbmPref.value) {
-      radiogroup.value = "private";
-    } else {
-      radiogroup.value = "never";
-    }
-  },
-
-  /**
-   * Sets the pref values based on the selected item of the radiogroup.
-   */
-  trackingProtectionWritePrefs() {
-    let enabledPref = document.getElementById("privacy.trackingprotection.enabled");
-    let pbmPref = document.getElementById("privacy.trackingprotection.pbmode.enabled");
-    let radiogroup = document.getElementById("trackingProtectionRadioGroup");
-
-    switch (radiogroup.value) {
-      case "always":
-        enabledPref.value = true;
-        pbmPref.value = true;
-        break;
-      case "private":
-        enabledPref.value = false;
-        pbmPref.value = true;
-        break;
-      case "never":
-        enabledPref.value = false;
-        pbmPref.value = false;
-        break;
-    }
-  },
-#endif
 
   // HISTORY MODE
 
@@ -411,48 +313,6 @@ var gPrivacyPane = {
 
       this._shouldPromptForRestart = true;
   },
-
-#ifdef MOZ_SAFE_BROWSING
-  /**
-   * Displays fine-grained, per-site preferences for tracking protection.
-   */
-  showTrackingProtectionExceptions() {
-    let bundlePreferences = document.getElementById("bundlePreferences");
-    let params = {
-      permissionType: "trackingprotection",
-      hideStatusColumn: true,
-      windowTitle: bundlePreferences.getString("trackingprotectionpermissionstitle"),
-      introText: bundlePreferences.getString("trackingprotectionpermissionstext"),
-    };
-    gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
-                    null, params);
-  },
-#endif
-
-#ifdef MOZ_SAFE_BROWSING
-  /**
-   * Displays the available block lists for tracking protection.
-   */
-  showBlockLists: function ()
-  {
-    var bundlePreferences = document.getElementById("bundlePreferences");
-    let brandName = document.getElementById("bundleBrand")
-                            .getString("brandShortName");
-    var params = { brandShortName: brandName,
-                   windowTitle: bundlePreferences.getString("blockliststitle"),
-                   introText: bundlePreferences.getString("blockliststext") };
-    gSubDialog.open("chrome://browser/content/preferences/blocklists.xul",
-                    null, params);
-  },
-
-  /**
-   * Displays the Do Not Track settings dialog.
-   */
-  showDoNotTrackSettings() {
-    gSubDialog.open("chrome://browser/content/preferences/donottrack.xul",
-                    "resizable=no");
-  },
-#endif
 
   // HISTORY
 

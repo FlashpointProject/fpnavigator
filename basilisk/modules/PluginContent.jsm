@@ -20,9 +20,6 @@ XPCOMUtils.defineLazyGetter(this, "gNavigatorBundle", function() {
   return Services.strings.createBundle(url);
 });
 
-XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
-  "resource://gre/modules/AppConstants.jsm");
-
 this.PluginContent = function (global) {
   this.init(global);
 }
@@ -608,11 +605,6 @@ PluginContent.prototype = {
       { name, pluginTag });
   },
 
-  submitReport: function submitReport(plugin) {
-    /*** STUB ***/
-    return;
-  },
-
   reloadPage: function () {
     this.global.content.location.reload();
   },
@@ -982,7 +974,6 @@ PluginContent.prototype = {
         .addEventListener("click", (event) => {
           if (event.button != 0 || !event.isTrusted)
             return;
-          this.submitReport(plugin);
         });
 
     let pref = Services.prefs.getBranch("dom.ipc.plugins.reportCrashURL");

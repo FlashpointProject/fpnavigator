@@ -13,7 +13,7 @@ browser.jar:
 
         content/browser/aboutDialog-appUpdater.js     (content/aboutDialog-appUpdater.js)
 *       content/browser/aboutDialog.xul               (content/aboutDialog.xul)
-        content/browser/aboutDialog.js                (content/aboutDialog.js)
+*       content/browser/aboutDialog.js                (content/aboutDialog.js)
         content/browser/aboutDialog.css               (content/aboutDialog.css)
 *       content/browser/abouthome/aboutHome.xhtml     (content/abouthome/aboutHome.xhtml)
         content/browser/abouthome/aboutHome.js        (content/abouthome/aboutHome.js)
@@ -47,11 +47,6 @@ browser.jar:
 
         content/browser/aboutNetError.xhtml            (content/aboutNetError.xhtml)
 
-#ifdef MOZ_SERVICES_HEALTHREPORT
-        content/browser/abouthealthreport/abouthealth.xhtml   (content/abouthealthreport/abouthealth.xhtml)
-        content/browser/abouthealthreport/abouthealth.js      (content/abouthealthreport/abouthealth.js)
-        content/browser/abouthealthreport/abouthealth.css     (content/abouthealthreport/abouthealth.css)
-#endif
         content/browser/aboutTabCrashed.css           (content/aboutTabCrashed.css)
         content/browser/aboutTabCrashed.js            (content/aboutTabCrashed.js)
         content/browser/aboutTabCrashed.xhtml         (content/aboutTabCrashed.xhtml)
@@ -61,28 +56,24 @@ browser.jar:
         content/browser/browser-addons.js             (content/browser-addons.js)
         content/browser/browser-captivePortal.js      (content/browser-captivePortal.js)
         content/browser/browser-ctrlTab.js            (content/browser-ctrlTab.js)
-        content/browser/browser-customization.js      (content/browser-customization.js)
+*       content/browser/browser-customization.js      (content/browser-customization.js)
         content/browser/browser-data-submission-info-bar.js (content/browser-data-submission-info-bar.js)
-        content/browser/browser-feeds.js              (content/browser-feeds.js)
-        content/browser/browser-fullScreenAndPointerLock.js  (content/browser-fullScreenAndPointerLock.js)
+*       content/browser/browser-feeds.js              (content/browser-feeds.js)
+*       content/browser/browser-fullScreenAndPointerLock.js  (content/browser-fullScreenAndPointerLock.js)
         content/browser/browser-fullZoom.js           (content/browser-fullZoom.js)
-        content/browser/browser-gestureSupport.js     (content/browser-gestureSupport.js)
+*       content/browser/browser-gestureSupport.js     (content/browser-gestureSupport.js)
 *       content/browser/browser-media.js              (content/browser-media.js)
 *       content/browser/browser-places.js             (content/browser-places.js)
         content/browser/browser-plugins.js            (content/browser-plugins.js)
         content/browser/browser-refreshblocker.js     (content/browser-refreshblocker.js)
-#ifdef MOZ_SAFE_BROWSING
-        content/browser/browser-safebrowsing.js       (content/browser-safebrowsing.js)
-#endif
         content/browser/browser-sidebar.js            (content/browser-sidebar.js)
 *       content/browser/browser-tabPreviews.xml       (content/browser-tabPreviews.xml)
 #ifdef MOZ_CAN_DRAW_IN_TITLEBAR
-        content/browser/browser-tabsintitlebar.js       (content/browser-tabsintitlebar.js)
+*       content/browser/browser-tabsintitlebar.js       (content/browser-tabsintitlebar.js)
 #else
         content/browser/browser-tabsintitlebar.js       (content/browser-tabsintitlebar-stub.js)
 #endif
         content/browser/browser-thumbnails.js         (content/browser-thumbnails.js)
-        content/browser/browser-trackingprotection.js (content/browser-trackingprotection.js)
         content/browser/tab-content.js                (content/tab-content.js)
         content/browser/content.js                    (content/content.js)
         content/browser/defaultthemes/1.footer.jpg    (content/defaultthemes/1.footer.jpg)
@@ -105,8 +96,6 @@ browser.jar:
         content/browser/defaultthemes/5.header.png    (content/defaultthemes/5.header.png)
         content/browser/defaultthemes/5.icon.jpg      (content/defaultthemes/5.icon.jpg)
         content/browser/defaultthemes/5.preview.jpg   (content/defaultthemes/5.preview.jpg)
-        content/browser/defaultthemes/devedition.header.png   (content/defaultthemes/devedition.header.png)
-        content/browser/defaultthemes/devedition.icon.png     (content/defaultthemes/devedition.icon.png)
         content/browser/gcli_sec_bad.svg              (content/gcli_sec_bad.svg)
         content/browser/gcli_sec_good.svg             (content/gcli_sec_good.svg)
         content/browser/gcli_sec_moderate.svg         (content/gcli_sec_moderate.svg)
@@ -124,16 +113,16 @@ browser.jar:
         content/browser/safeMode.css                  (content/safeMode.css)
         content/browser/safeMode.js                   (content/safeMode.js)
         content/browser/safeMode.xul                  (content/safeMode.xul)
-        content/browser/sanitize.js                   (content/sanitize.js)
+*       content/browser/sanitize.js                   (content/sanitize.js)
 *       content/browser/sanitize.xul                  (content/sanitize.xul)
 *       content/browser/sanitizeDialog.js             (content/sanitizeDialog.js)
         content/browser/sanitizeDialog.css            (content/sanitizeDialog.css)
         content/browser/contentSearchUI.js            (content/contentSearchUI.js)
         content/browser/contentSearchUI.css           (content/contentSearchUI.css)
         content/browser/tabbrowser.css                (content/tabbrowser.css)
-        content/browser/tabbrowser.xml                (content/tabbrowser.xml)
-        content/browser/urlbarBindings.xml            (content/urlbarBindings.xml)
-        content/browser/utilityOverlay.js             (content/utilityOverlay.js)
+*       content/browser/tabbrowser.xml                (content/tabbrowser.xml)
+*       content/browser/urlbarBindings.xml            (content/urlbarBindings.xml)
+*       content/browser/utilityOverlay.js             (content/utilityOverlay.js)
         content/browser/usercontext.svg               (content/usercontext.svg)
         content/browser/web-panels.js                 (content/web-panels.js)
 *       content/browser/web-panels.xul                (content/web-panels.xul)
@@ -155,10 +144,5 @@ browser.jar:
 # the following files are browser-specific overrides
 *       content/browser/license.html                  (/platform/toolkit/content/license.html)
 % override chrome://global/content/license.html chrome://browser/content/license.html
-#ifdef MOZ_SAFE_BROWSING
-        content/browser/report-phishing-overlay.xul     (content/report-phishing-overlay.xul)
-        content/browser/blockedSite.xhtml               (content/blockedSite.xhtml)
-% overlay chrome://browser/content/browser.xul chrome://browser/content/report-phishing-overlay.xul
-#endif
 
 % override chrome://global/content/netError.xhtml chrome://browser/content/aboutNetError.xhtml

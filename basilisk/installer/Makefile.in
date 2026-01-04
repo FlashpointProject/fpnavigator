@@ -15,12 +15,6 @@ MOZ_PKG_DUPEFLAGS = -f $(srcdir)/allowed-dupes.mn
 # Some files have been already bundled with xulrunner
 MOZ_PKG_FATAL_WARNINGS = 1
 
-# When packaging an artifact build not all xpt files expected by the
-# packager will be present.
-ifdef MOZ_ARTIFACT_BUILDS
-MOZ_PKG_FATAL_WARNINGS =
-endif
-
 DEFINES += -DMOZ_APP_NAME=$(MOZ_APP_NAME) -DPREF_DIR=$(PREF_DIR)
 
 ifdef MOZ_DEBUG
@@ -40,14 +34,6 @@ endif
 
 ifdef MOZ_SYSTEM_NSS
 DEFINES += -DMOZ_SYSTEM_NSS=1
-endif
-
-ifdef NSS_DISABLE_DBM
-DEFINES += -DNSS_DISABLE_DBM=1
-endif
-
-ifdef MOZ_ARTIFACT_BUILDS
-DEFINES += -DMOZ_ARTIFACT_BUILDS=1
 endif
 
 DEFINES += -DJAREXT=
@@ -73,7 +59,7 @@ DEFINES += -DMOZ_PACKAGE_WIN_UCRT_DLLS=1
 endif
 endif
 
-ifneq (,$(filter WINNT Darwin Android,$(OS_TARGET)))
+ifneq (,$(filter WINNT Darwin,$(OS_TARGET)))
 DEFINES += -DMOZ_SHARED_MOZGLUE=1
 endif
 
@@ -126,14 +112,15 @@ endif
 DEFINES += -DLPROJ_ROOT=$(LPROJ_ROOT)
 
 DEFINES += -DMOZ_ICU_VERSION=$(MOZ_ICU_VERSION)
-ifdef MOZ_SYSTEM_ICU
-DEFINES += -DMOZ_SYSTEM_ICU
+ifdef MOZ_SHARED_ICU
+DEFINES += -DMOZ_SHARED_ICU
 endif
 ifdef MOZ_ICU_DATA_ARCHIVE
 DEFINES += -DMOZ_ICU_DATA_ARCHIVE
 endif
 DEFINES += -DMOZ_ICU_DBG_SUFFIX=$(MOZ_ICU_DBG_SUFFIX)
 DEFINES += -DICU_DATA_FILE=$(ICU_DATA_FILE)
+DEFINES += -DICU_DATA_FILE_BIG=$(ICU_DATA_FILE_BIG)
 ifdef CLANG_CXX
 DEFINES += -DCLANG_CXX
 endif
@@ -149,14 +136,8 @@ endif
 endif
 
 
-# Builds using the hybrid FasterMake/RecursiveMake backend will
-# fail to produce a langpack. See bug 1255096.
 make-langpack:
-ifeq (,$(filter FasterMake+RecursiveMake,$(BUILD_BACKENDS)))
 	$(MAKE) -C $(DEPTH)/basilisk/locales langpack
-else
-	@echo WARNING: "Language Pack was not generated due to using the hybrid FasterMake/RecursiveMake backend." >&2
-endif
 
 libs:: make-langpack
 

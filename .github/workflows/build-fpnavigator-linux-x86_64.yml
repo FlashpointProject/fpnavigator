@@ -1,0 +1,64 @@
+name: Build fpnavigator Linux x86_64
+
+on:  
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - release
+
+jobs:
+  build-fpnavigator:
+    if: false
+    name: Build fpnavigator Linux ${{ matrix.config.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - name: GTK3 x86_64
+          gtk: gtk3
+          arch: x86_64
+        - name: GTK2 x86_64
+          gtk: gtk2
+          arch: x86_64
+    steps:
+      - name: Free Disk Space
+        run: |
+          sudo apt-get update
+          sudo apt-get remove -y *dotnet* *google-cloud* *aws* *php* google-chrome-stable firefox powershell mono-devel
+          sudo apt-get autoremove -y
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Copy mozconfig
+        run: cp mozconfigs/linux/${{ matrix.config.arch }}/${{ matrix.config.gtk }}_unofficial_branding.mozconfig .mozconfig
+
+      # Restore ccache cache
+      - name: Restore CCache Cache
+        uses: actions/cache@v4
+        continue-on-error: true
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ github.ref }}-${{ matrix.config.gtk }}-${{ matrix.config.arch }}-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-ccache-${{ github.ref }}-${{ matrix.config.gtk }}-${{ matrix.config.arch }}
+
+      - name: Build fpnavigator
+        run: ./build-scripts/linux/build_fpnavigator.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fpnavigator-linux-${{ matrix.config.arch }}-${{ matrix.config.gtk }}
+          path: obj-${{ matrix.config.arch }}-pc-linux-gnu/dist/fpnavigator-*
+
+      # Save ccache cache
+      - name: Save CCache Cache
+        if: always() # Ensures the cache step runs even if the build fails
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ github.ref }}-${{ matrix.config.gtk }}-${{ matrix.config.arch }}-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-ccache-${{ github.ref }}-${{ matrix.config.gtk }}-${{ matrix.config.arch }}
+        continue-on-error: true

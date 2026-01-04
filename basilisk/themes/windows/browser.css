@@ -127,7 +127,7 @@ toolbar:-moz-lwtheme {
   #navigator-toolbox {
     /* Override the global style for Windows 10 that adds a bottom border */
     border-bottom: none;
-  };
+  }
 }
 
 #navigator-toolbox::after {
@@ -181,7 +181,7 @@ toolbar:-moz-lwtheme {
 }
 
 #navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar):not(#nav-bar):not(#addon-bar) {
-  overflow: -moz-hidden-unscrollable;
+  overflow: clip;
   max-height: 4em;
   transition: min-height 170ms ease-out, max-height 170ms ease-out;
   padding: 0 5px;
@@ -276,7 +276,7 @@ toolbar:-moz-lwtheme {
 
   /* Need to constrain the box shadow fade to avoid overlapping layers, see bug 886281. */
   #main-window[tabsintitlebar]:not([sizemode=fullscreen]) #navigator-toolbox:not(:-moz-lwtheme) {
-    overflow: -moz-hidden-unscrollable;
+    overflow: clip;
   }
 
   /**
@@ -1582,21 +1582,19 @@ html|span.ac-emphasize-text-url {
   }
 }
 
-@media not all and (-moz-os-version: windows-vista) and (-moz-windows-default-theme) {
-  @media not all and (-moz-os-version: windows-win7) and (-moz-windows-default-theme) {
+@media not all and (-moz-os-version: windows-win7) and (-moz-windows-default-theme) {
+  .autocomplete-treebody::-moz-tree-image(selected, current, bookmark, treecolAutoCompleteImage) {
+    -moz-image-region: rect(0 32px 16px 16px);
+  }
+
+  @media (min-resolution: 1.1dppx) {
     .autocomplete-treebody::-moz-tree-image(selected, current, bookmark, treecolAutoCompleteImage) {
-      -moz-image-region: rect(0 32px 16px 16px);
+      -moz-image-region: rect(0 64px 32px 32px);
     }
+  }
 
-    @media (min-resolution: 1.1dppx) {
-      .autocomplete-treebody::-moz-tree-image(selected, current, bookmark, treecolAutoCompleteImage) {
-        -moz-image-region: rect(0 64px 32px 32px);
-      }
-    }
-
-    .autocomplete-treebody::-moz-tree-image(keyword, treecolAutoCompleteImage, selected) {
-      list-style-image: url(chrome://global/skin/icons/autocomplete-search.svg#search-icon-inverted);
-    }
+  .autocomplete-treebody::-moz-tree-image(keyword, treecolAutoCompleteImage, selected) {
+    list-style-image: url(chrome://global/skin/icons/autocomplete-search.svg#search-icon-inverted);
   }
 }
 

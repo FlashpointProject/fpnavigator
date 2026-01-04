@@ -10,7 +10,6 @@ const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PanelWideWidgetTracker",
   "resource:///modules/PanelWideWidgetTracker.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableWidgets",
@@ -60,7 +59,7 @@ var kVersion = 6;
 /**
  * Buttons removed from built-ins by version they were removed. kVersion must be
  * bumped any time a new id is added to this. Use the button id as key, and
- * version the button is removed in as the value.  e.g. "pocket-button": 5
+ * version the button is removed in as the value.  e.g. "pocket-button": 6
  */
 var ObsoleteBuiltinButtons = {
   "pocket-button": 6
@@ -223,13 +222,6 @@ var CustomizableUIInternal = {
       "home-button",
     ];
 
-    // Place this last, when createWidget is called for pocket, it will
-    // append to the toolbar.
-    if (Services.prefs.getPrefType("extensions.pocket.enabled") != Services.prefs.PREF_INVALID &&
-        Services.prefs.getBoolPref("extensions.pocket.enabled")) {
-        navbarPlacements.push("pocket-button");
-    }
-
     this.registerArea(CustomizableUI.AREA_NAVBAR, {
       legacy: true,
       type: CustomizableUI.TYPE_TOOLBAR,
@@ -238,16 +230,16 @@ var CustomizableUIInternal = {
       defaultCollapsed: false,
     }, true);
 
-    if (AppConstants.MENUBAR_CAN_AUTOHIDE) {
-      this.registerArea(CustomizableUI.AREA_MENUBAR, {
-        legacy: true,
-        type: CustomizableUI.TYPE_TOOLBAR,
-        defaultPlacements: [
-          "menubar-items",
-        ],
-        defaultCollapsed: true,
-      }, true);
-    }
+#ifdef MENUBAR_CAN_AUTOHIDE
+    this.registerArea(CustomizableUI.AREA_MENUBAR, {
+      legacy: true,
+      type: CustomizableUI.TYPE_TOOLBAR,
+      defaultPlacements: [
+        "menubar-items",
+      ],
+      defaultCollapsed: true,
+    }, true);
+#endif
 
     this.registerArea(CustomizableUI.AREA_TABSTRIP, {
       legacy: true,
@@ -283,9 +275,9 @@ var CustomizableUIInternal = {
       CustomizableUI.AREA_TABSTRIP,
       CustomizableUI.AREA_ADDONBAR,
     ]);
-    if (AppConstants.platform != "macosx") {
-      toolbars.add(CustomizableUI.AREA_MENUBAR);
-    }
+#ifdef XP_MACOSX
+    toolbars.add(CustomizableUI.AREA_MENUBAR);
+#endif
     return toolbars;
   },
 

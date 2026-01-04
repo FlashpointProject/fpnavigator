@@ -41,8 +41,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
                                   "resource://gre/modules/PluralForm.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
-                                  "resource://gre/modules/AppConstants.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
                                   "resource://gre/modules/Downloads.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DownloadUIHelper",
@@ -304,9 +302,6 @@ this.DownloadsCommon = {
       if (download.error.becauseBlockedByParentalControls) {
         return nsIDM.DOWNLOAD_BLOCKED_PARENTAL;
       }
-      if (download.error.becauseBlockedByReputationCheck) {
-        return nsIDM.DOWNLOAD_DIRTY;
-      }
       return nsIDM.DOWNLOAD_FAILED;
     }
     if (download.canceled) {
@@ -460,8 +455,11 @@ this.DownloadsCommon = {
       throw new Error("aOwnerWindow must be a dom-window object");
     }
 
-    let isWindowsExe = AppConstants.platform == "win" &&
-      aFile.leafName.toLowerCase().endsWith(".exe");
+#ifdef XP_WIN
+    let isWindowsExe = aFile.leafName.toLowerCase().endsWith(".exe");
+#else
+    let isWindowsExe = false;
+#endif
 
     let promiseShouldLaunch;
     // Don't prompt on Windows for .exe since there will be a native prompt.
@@ -661,18 +659,6 @@ XPCOMUtils.defineLazyGetter(this.DownloadsCommon, "error", () => {
   return DownloadsLogger.error.bind(DownloadsLogger);
 });
 
-/**
- * Returns true if we are executing on Windows Vista or a later version.
- */
-XPCOMUtils.defineLazyGetter(DownloadsCommon, "isWinVistaOrHigher", function () {
-  let os = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).OS;
-  if (os != "WINNT") {
-    return false;
-  }
-  let sysInfo = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2);
-  return parseFloat(sysInfo.getProperty("version")) >= 6;
-});
-
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadsData
 
@@ -784,10 +770,6 @@ DownloadsDataCtor.prototype = {
         // Store the end time that may be displayed by the views.
         download.endTime = Date.now();
 
-        // This state transition code should actually be located in a Downloads
-        // API module (bug 941009).  Moreover, the fact that state is stored as
-        // annotations should be ideally hidden behind methods of
-        // nsIDownloadHistory (bug 830415).
         if (!this._isPrivate) {
           try {
             let downloadMetaData = {
@@ -797,11 +779,6 @@ DownloadsDataCtor.prototype = {
             if (download.succeeded) {
               downloadMetaData.fileSize = download.target.size;
             }
-            if (download.error && download.error.reputationCheckVerdict) {
-              downloadMetaData.reputationCheckVerdict =
-                download.error.reputationCheckVerdict;
-            }
-
             PlacesUtils.annotations.setPageAnnotation(
                           NetUtil.newURI(download.source.url),
                           "downloads/metaData",
@@ -1182,24 +1159,7 @@ DownloadsIndicatorDataCtor.prototype = {
   },
 
   onDownloadStateChanged(download) {
-    if (!download.succeeded && download.error && download.error.reputationCheckVerdict) {
-      switch (download.error.reputationCheckVerdict) {
-        case Downloads.Error.BLOCK_VERDICT_UNCOMMON: // fall-through
-        case Downloads.Error.BLOCK_VERDICT_POTENTIALLY_UNWANTED:
-          // Existing higher level attention indication trumps ATTENTION_WARNING.
-          if (this._attention != DownloadsCommon.ATTENTION_SEVERE) {
-            this.attention = DownloadsCommon.ATTENTION_WARNING;
-          }
-          break;
-        case Downloads.Error.BLOCK_VERDICT_MALWARE:
-          this.attention = DownloadsCommon.ATTENTION_SEVERE;
-          break;
-        default:
-          this.attention = DownloadsCommon.ATTENTION_SEVERE;
-          Cu.reportError("Unknown reputation verdict: " +
-                         download.error.reputationCheckVerdict);
-      }
-    } else if (download.succeeded) {
+    if (download.succeeded) {
       // Existing higher level attention indication trumps ATTENTION_SUCCESS.
       if (this._attention != DownloadsCommon.ATTENTION_SEVERE &&
           this._attention != DownloadsCommon.ATTENTION_WARNING) {

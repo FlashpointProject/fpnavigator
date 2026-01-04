@@ -20,7 +20,7 @@
 }
 
 #main-window[customize-entered] {
-  min-width: -moz-fit-content;
+  min-width: fit-content;
 }
 
 searchbar {
@@ -185,6 +185,16 @@ tabbrowser {
 
 .tabbrowser-tabs[movingtab] > .tabbrowser-tab[fadein]:not([selected]) {
   transition: transform 200ms ease-out;
+}
+
+@supports -moz-bool-pref("browser.tabs.fadeLabels") {
+  .tabbrowser-tab .tab-text[_is_cropped] {
+    mask-image: linear-gradient(to left, transparent, black 2em);
+  }
+
+  .tabbrowser-tab .tab-text[_is_cropped]:-moz-locale-dir(rtl) {
+    mask-image: linear-gradient(to right, transparent, black 2em);
+  }
 }
 
 .new-tab-popup,

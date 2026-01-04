@@ -1,8 +1,8 @@
-# Flashpoint Web browser (fpbrowser)
+# Flashpoint Navigator
 
-This is the source code for the Flashpoint Web Browser, a web browser based up on Basilisk which is then derrived from Firefox / Mozilla community code.
+This is the source code for the Flashpoint Navigator, a web browser based up on Basilisk which is then derrived from Firefox / Mozilla community code.
 
-## Building
+## Building Flashpoint Navigator
 
 The browser uses Unified XUL Platform source as the browsers code and is referenced as a git submodule contained in the `platform/` directory and is required to build the application.
 
@@ -10,49 +10,76 @@ The browser uses Unified XUL Platform source as the browsers code and is referen
 
 ```bash
 git submodule init && git submodule update
-````
+```
 
 ### Windows
 
-Short-guide for building on Windows.
+Make sure you have plenty of disk space and at least 8GB of ram with 2 or more cores, the more the better. Running Windows 10 or Windows 11 is recommended.
+Make sure to clone the repository to a path without spaces, i.e.: `C:\fpnavigator`
 
-Make sure you have plenty of disk space and at least 8GB of ram with 2 or more cores, the more the better. Running Windows 7 or newer with 64-bit.
-Make sure to clone the repository to a path without spaces, i.e.: `C:\fpbrowser`
+* At least Windows 10 64-bit (32-bit build environments or Windows versions < 10 are not supported)
+* Microsoft Visual Studio 2022 (Community Edition (free) or Pro/Paid version. Express won't work).
+Component selection during installation:
+  * "Desktop development with C++"
+  * "Game development with C++".
+  * MSVC v143 (v14.44-17.14) toolset
+  * Windows 11 SDK 10.0.26100.0
+* [MozillaBuild 3.4](https://ftp.mozilla.org/pub/mozilla/libraries/win32/MozillaBuildSetup-3.4.exe)
+* At least 6GB RAM or more (8GB+ recommended)
+* Plenty of disk space (at least 10GB free recommended)
 
+**NB**: If you plan to build for 32-bit Windows, you need to install Windows 11 SDK 10.0.22621.0 as well.
 
-**The following build tools is necessary:**
+#### Preapre the build environment
 
-- Microsoft Visual Studio 2015 (Community Edition (free) or Pro/Paid version -- Express will not work) with updates.
+After installing MozillaBuild, you need to set up the build environment. 
 
-  Make sure you install the correct components for "C++ development"; other languages are not necessary and not installing them will save you (heaps of) disk space.
-- Exactly [Windows 10 SDK version 10.0.19041.0](https://developer.microsoft.com/en-us/windows/downloads/sdk-archive/) (with servicing update .685)
-- [MozillaBuild 2.2](https://ftp.mozilla.org/pub/mozilla/libraries/win32/MozillaBuildSetup-2.2.0.exe)
-
-#### Executing windows build
-You need to launch the proper build tools ennvironment for target architecture
-
-- x86: `C:\mozilla-build\start-shell-msvc2015.bat`
-- or x64: `C:\mozilla-build\start-shell-msvc2015-x64.bat.bat`
-
-to enter a Linux-like environment (MSYS).
-
- Navigate to the directory of the source code:
+Clone the repository to a path without spaces, i.e.: `C:\fpbrowser` then open Git bash and pull the submodules:
 
 ```bash
-cd /c/fpbrowser
+git submodule init && git submodule update
 ```
 
-execute the pre-defined build script which will build and package it for you depending on what you want to build.
+It is also recommened to add  MSVC build scripts the Mozbuild environment. These were previously included with MozillaBuild but are no longer included by default. Downloed the scripts from [here](https://repo.palemoon.org/FranklinDM/msvc-build-scripts-for-uxp) and place them in `C:\mozilla-build\` folder.
 
+Close git bash and follow build instructions below.
+
+#### Build Instructions
+
+##### Configure
+
+Update the variable `WIN32_REDIST_DIR` in the mozconfig files to point to the location of your Visual Studio redist files.
+* For x86 build edit `mozconfigs/windows/win32/win32_fpnavigator.mozconfig`
+* For x64 build edit `mozconfigs/windows/win64/win64_fpnavigator.mozconfig`
+
+You should also probably update `MOZ_MAKE_FLAGS` to match your CPU core count for faster builds.
+
+##### Build
+
+1. Go to C:\mozilla-build (or wherever you installed MozillaBuild) and run the appropriate batch file to start the build environment: `start-shell.bat`. This will open a UNIX-like shell.
+2. In the shell navigate to the directory where you cloned the source code, e.g. `cd /c/fpbrowser`
+3. Set the MOZCONFIG variable to point to the appropriate mozconfig file for your target architecture:
+
+    * For x86 build: `export MOZCONFIG=$(pwd)/mozconfigs/windows/win32/win32_fpnavigator.mozconfig`
+    * For x64 build: `export MOZCONFIG=$(pwd)/mozconfigs/windows/win64/win64_fpnavigator.mozconfig`
+
+4. Start the build process by running: `./mach build`
+
+#### Strip Package
+
+To create a stripped package for release run the command: 
 ```bash
-./scripts/build_windows_x86.sh
-or
-./scripts/build_windows_x64.sh
+./mach package
 ```
 
-When finished you will get a new folder named `obj*` that contains the finished build inside `dist` folder
+This will create a zip file inside the `obj*` folder under `dist` directory.
+```bash
+C:\fpbrowser\obj-i686-pc-mingw32\dist\flashpointnavigator-<timestamp>.win32.zip
+```
 
 ### Mac
+
+**Needs to be updated!!**
 
 To build for Mac you need to setup a proper build environment. You need will the following toolset listed below which are going to be installed following this short guide.
 

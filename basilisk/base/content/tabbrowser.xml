@@ -67,9 +67,6 @@
          Components.classes["@mozilla.org/autocomplete/search;1?name=unifiedcomplete"]
                    .getService(Components.interfaces.mozIPlacesAutoComplete);
       </field>
-      <field name="AppConstants" readonly="true">
-        (Components.utils.import("resource://gre/modules/AppConstants.jsm", {})).AppConstants;
-      </field>
       <field name="mTabBox" readonly="true">
         document.getAnonymousElementByAttribute(this, "anonid", "tabbox");
       </field>
@@ -110,7 +107,11 @@
         new Map();
       </field>
       <field name="arrowKeysShouldWrap" readonly="true">
-        this.AppConstants.platform == "macosx";
+#ifdef XP_MACOSX
+        true
+#else
+        false
+#endif
       </field>
 
       <field name="_autoScrollPopup">
@@ -761,12 +762,19 @@
                   !!(aFlags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT);
                 // We need to clear the typed value
                 // if the document failed to load, to make sure the urlbar reflects the
-                // failed URI (particularly for SSL errors). However, don't clear the value
+                // failed URI (particularly for SSL errors).
+                //
+                // Also clear the typed value (edit status) if fragment navigating inside
+                // the same document (see UXP Issue #1954).
+                //
+                // However, don't clear the value
                 // if the error page's URI is about:blank, because that causes complete
                 // loss of urlbar contents for invalid URI errors (see bug 867957).
+                //
                 // Another reason to clear the userTypedValue is if this was an anchor
                 // navigation initiated by the user.
                 if (this.mBrowser.didStartLoadSinceLastUserTyping() ||
+                    (isSameDocument && !isUrlFocused) ||
                     ((aFlags & Ci.nsIWebProgressListener.LOCATION_CHANGE_ERROR_PAGE) &&
                      aLocation.spec != "about:blank") ||
                     (isSameDocument && this.mBrowser.inLoadURI)) {
@@ -985,10 +993,19 @@
             var docElement = this.ownerDocument.documentElement;
             var sep = docElement.getAttribute("titlemenuseparator");
 
-            // Strip out any null bytes in the content title, since the
-            // underlying widget implementations of nsWindow::SetTitle pass
-            // null-terminated strings to system APIs.
-            var docTitle = aBrowser.contentTitle.replace(/\0/g, "");
+            var docTitle;
+            if (!Services.prefs.getBoolPref("privacy.exposeContentTitleInWindow") ||
+                    ((PrivateBrowsingUtils.isWindowPrivate(window) ||
+                                    PrivateBrowsingUtils.permanentPrivateBrowsing) &&
+                            !Services.prefs.getBoolPref("privacy.exposeContentTitleInWindow.pbm"))) {
+                // If exposing of the content title is preffed off, don't set the docTitle
+                // so it will be filled with titledefault below.
+            } else {
+                // Strip out any null bytes in the content title, since the
+                // underlying widget implementations of nsWindow::SetTitle pass
+                // null-terminated strings to system APIs.
+                docTitle = aBrowser.contentTitle.replace("\0", "", "g");
+            }
 
             if (!docTitle)
               docTitle = docElement.getAttribute("titledefault");
@@ -1051,13 +1068,11 @@
 
             var oldBrowser = this.mCurrentBrowser;
 
-            if (!gMultiProcessBrowser) {
-              oldBrowser.setAttribute("type", "content-targetable");
-              oldBrowser.docShellIsActive = false;
-              newBrowser.setAttribute("type", "content-primary");
-              newBrowser.docShellIsActive =
-                (window.windowState != window.STATE_MINIMIZED);
-            }
+            oldBrowser.setAttribute("type", "content-targetable");
+            oldBrowser.docShellIsActive = false;
+            newBrowser.setAttribute("type", "content-primary");
+            newBrowser.docShellIsActive =
+              (window.windowState != window.STATE_MINIMIZED);
 
             var updateBlockedPopups = false;
             if ((oldBrowser.blockedPopups && !newBrowser.blockedPopups) ||
@@ -1207,27 +1222,20 @@
                 // We need to explicitly focus the new tab, because
                 // tabbox.xml does this only in some cases.
                 this.mCurrentTab.focus();
-              } else if (gMultiProcessBrowser && document.activeElement !== newBrowser) {
-                // Clear focus so that _adjustFocusAfterTabSwitch can detect if
-                // some element has been focused and respect that.
-                document.activeElement.blur();
               }
 
-              if (!gMultiProcessBrowser)
-                this._adjustFocusAfterTabSwitch(this.mCurrentTab);
+              this._adjustFocusAfterTabSwitch(this.mCurrentTab);
             }
 
             gIdentityHandler.updateSharingIndicator();
 
             this.tabContainer._setPositionalAttributes();
 
-            if (!gMultiProcessBrowser) {
-              let event = new CustomEvent("TabSwitchDone", {
-                bubbles: true,
-                cancelable: true
-              });
-              this.dispatchEvent(event);
-            }
+            let event = new CustomEvent("TabSwitchDone", {
+              bubbles: true,
+              cancelable: true
+            });
+            this.dispatchEvent(event);
           ]]>
         </body>
       </method>
@@ -1275,26 +1283,18 @@
           return;
         }
 
-        // Don't focus the content area if something has been focused after the
-        // tab switch was initiated.
-        if (gMultiProcessBrowser &&
-            document.activeElement != document.documentElement)
-          return;
-
         // We're now committed to focusing the content area.
         let fm = Services.focus;
         let focusFlags = fm.FLAG_NOSCROLL;
 
-        if (!gMultiProcessBrowser) {
-          let newFocusedElement = fm.getFocusedElementForWindow(window.content, true, {});
+        let newFocusedElement = fm.getFocusedElementForWindow(window.content, true, {});
 
-          // for anchors, use FLAG_SHOWRING so that it is clear what link was
-          // last clicked when switching back to that tab
-          if (newFocusedElement &&
-              (newFocusedElement instanceof HTMLAnchorElement ||
-               newFocusedElement.getAttributeNS("http://www.w3.org/1999/xlink", "type") == "simple"))
-            focusFlags |= fm.FLAG_SHOWRING;
-        }
+        // for anchors, use FLAG_SHOWRING so that it is clear what link was
+        // last clicked when switching back to that tab
+        if (newFocusedElement &&
+            (newFocusedElement instanceof HTMLAnchorElement ||
+             newFocusedElement.getAttributeNS("http://www.w3.org/1999/xlink", "type") == "simple"))
+          focusFlags |= fm.FLAG_SHOWRING;
 
         fm.setFocus(newBrowser, focusFlags);
         ]]></body>
@@ -1385,7 +1385,11 @@
         <body>
           <![CDATA[
             aTab.label = this.mStringBundle.getString("tabs.connecting");
-            aTab.crop = "end";
+            if (Services.prefs.getBoolPref("browser.tabs.fadeLabels")) {
+              aTab.crop = "clip";
+            } else {
+              aTab.crop = "end";
+            }
             this._tabAttrModified(aTab, ["label", "crop"]);
           ]]>
         </body>
@@ -1428,6 +1432,10 @@
                                                             [ brandShortName ]);
               } else // Still no title?  Fall back to our untitled string.
                 title = this.mStringBundle.getString("tabs.emptyTabTitle");
+            }
+
+            if (Services.prefs.getBoolPref("browser.tabs.fadeLabels")) {
+              crop = "clip";
             }
 
             if (aTab.label == title &&
@@ -1760,14 +1768,7 @@
         <parameter name="aBrowser"/>
         <body>
           <![CDATA[
-            if (!gMultiProcessBrowser) {
-              return this.updateBrowserRemoteness(aBrowser, false);
-            }
-
-            return this.updateBrowserRemoteness(aBrowser,
-                                                /* aShouldBeRemote */ true,
-                                                /* aOpener */ null,
-                                                /* aFreshProcess */ true);
+            return this.updateBrowserRemoteness(aBrowser, false);
           ]]>
         </body>
       </method>
@@ -1777,18 +1778,7 @@
         <parameter name="aURL"/>
         <body>
           <![CDATA[
-            if (!gMultiProcessBrowser)
-              return this.updateBrowserRemoteness(aBrowser, false);
-
-            let process = aBrowser.isRemoteBrowser ? Ci.nsIXULRuntime.PROCESS_TYPE_CONTENT
-                                                   : Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
-
-            // If this URL can't load in the browser's current process then flip
-            // it to the other process
-            if (!E10SUtils.canLoadURIInProcess(aURL, process))
-              return this.updateBrowserRemoteness(aBrowser, !aBrowser.isRemoteBrowser);
-
-            return false;
+            return this.updateBrowserRemoteness(aBrowser, false);
           ]]>
         </body>
       </method>
@@ -1843,20 +1833,11 @@
               return;
             }
 
-            let remote = gMultiProcessBrowser &&
-                         E10SUtils.canLoadURIInProcess(BROWSER_NEW_TAB_URL, Ci.nsIXULRuntime.PROCESS_TYPE_CONTENT);
-            let browser = this._createBrowser({isPreloadBrowser: true, remote: remote});
+            let browser = this._createBrowser({isPreloadBrowser: true, remote: false});
             this._preloadedBrowser = browser;
 
             let notificationbox = this.getNotificationBox(browser);
             this.mPanelContainer.appendChild(notificationbox);
-
-            if (remote) {
-              // For remote browsers, we need to make sure that the webProgress is
-              // instantiated, otherwise the parent won't get informed about the state
-              // of the preloaded browser until it gets attached to a tab.
-              browser.webProgress;
-            }
 
             browser.loadURI(BROWSER_NEW_TAB_URL);
             browser.docShellIsActive = false;
@@ -1963,12 +1944,6 @@
 
             let uriIsAboutBlank = !aURI || aURI == "about:blank";
 
-            // The new browser should be remote if this is an e10s window and
-            // the uri to load can be loaded remotely.
-            let remote = gMultiProcessBrowser &&
-                         !aParams.forceNotRemote &&
-                         E10SUtils.canLoadURIInProcess(aURI, Ci.nsIXULRuntime.PROCESS_TYPE_CONTENT);
-
             let browser;
             let usingPreloadedContent = false;
 
@@ -1988,7 +1963,7 @@
             if (!browser) {
               // No preloaded browser found, create one.
               browser = this._createBrowser({permanentKey: aTab.permanentKey,
-                                             remote: remote,
+                                             remote: false,
                                              uriIsAboutBlank: uriIsAboutBlank,
                                              relatedBrowser: aParams.relatedBrowser,
                                              opener: aParams.opener});
@@ -2032,9 +2007,7 @@
             // from being created as soon as the linked <browser> is inserted
             // into the DOM. We thus have to register the new outerWindowID
             // for non-remote browsers after we have called browser.loadURI().
-            if (!remote) {
-              this._outerWindowIDBrowserMap.set(browser.outerWindowID, browser);
-            }
+            this._outerWindowIDBrowserMap.set(browser.outerWindowID, browser);
 
             var evt = new CustomEvent("TabBrowserInserted", { bubbles: true, detail: {} });
             aTab.dispatchEvent(evt);
@@ -2112,7 +2085,11 @@
               t.setAttribute("label", aURI);
             }
 
-            t.setAttribute("crop", "end");
+            if (Services.prefs.getBoolPref("browser.tabs.fadeLabels")) {
+              t.setAttribute("crop", "clip");
+            } else {
+              t.setAttribute("crop", "end");
+            }
             t.setAttribute("onerror", "this.removeAttribute('image');");
 
             if (aSkipBackgroundNotify) {
@@ -2518,7 +2495,7 @@
             var evt = new CustomEvent("TabClose", { bubbles: true, detail: { adoptedBy: aAdoptedByTab } });
             aTab.dispatchEvent(evt);
 
-            if (!aAdoptedByTab && !gMultiProcessBrowser) {
+            if (!aAdoptedByTab) {
               // Prevent this tab from showing further dialogs, since we're closing it
               var windowUtils = browser.contentWindow.QueryInterface(Ci.nsIInterfaceRequestor).
                                 getInterface(Ci.nsIDOMWindowUtils);
@@ -2592,11 +2569,23 @@
             }
 
             // We're going to remove the tab and the browser now.
+
+            // Using the "STOP_ALL" flag should halt all animations, fetches, network
+            // activity, etc. to come to a clean state for removal and unlinking (if enabled).
+            var browser = this.getBrowserForTab(aTab);
+            browser.webNavigation.stop(Ci.nsIWebNavigation.STOP_ALL);
+
             this._tabFilters.delete(aTab);
             this._tabListeners.delete(aTab);
 
-            var browser = this.getBrowserForTab(aTab);
             this._outerWindowIDBrowserMap.delete(browser.outerWindowID);
+
+            if (Services.prefs.getBoolPref("browser.ghostbuster.enabled", true)) {
+              Cu.unlinkGhostWindows();
+#ifdef DEBUG
+              dump("Unlinking ghost windows has run on tab close.\n");
+#endif
+            }
 
             // Because of the way XBL works (fields just set JS
             // properties on the element) and the code we have in place
@@ -3703,9 +3692,9 @@
                 dump("Assertion failure\n" + Error().stack);
 
                 // Don't break a user's browser if an assertion fails.
-                if (this.tabbrowser.AppConstants.DEBUG) {
-                  throw new Error("Assertion failure");
-                }
+#ifdef DEBUG
+                throw new Error("Assertion failure");
+#endif
               }
             },
 
@@ -4056,7 +4045,7 @@
             },
 
             /*
-             * Telemetry and Profiler related helpers for recording tab switch
+             * Profiler related helpers for recording tab switch
              * timing.
              */
 
@@ -4386,14 +4375,14 @@
             }
           }
 
-          if (this.AppConstants.platform != "macosx") {
-            if (aEvent.ctrlKey && !aEvent.shiftKey && !aEvent.metaKey &&
-                aEvent.keyCode == KeyEvent.DOM_VK_F4 &&
-                !this.mCurrentTab.pinned) {
-              this.removeCurrentTab({animate: true});
-              aEvent.preventDefault();
-            }
+#ifndef XP_MACOSX
+          if (aEvent.ctrlKey && !aEvent.shiftKey && !aEvent.metaKey &&
+              aEvent.keyCode == KeyEvent.DOM_VK_F4 &&
+              !this.mCurrentTab.pinned) {
+            this.removeCurrentTab({animate: true});
+            aEvent.preventDefault();
           }
+#endif
         ]]></body>
       </method>
 
@@ -4408,21 +4397,21 @@
           if (aEvent.altKey)
             return;
 
-          if (this.AppConstants.platform == "macosx") {
-            if (!aEvent.metaKey)
-              return;
+#ifdef XP_MACOSX
+          if (!aEvent.metaKey)
+            return;
 
-            var offset = 1;
-            switch (aEvent.charCode) {
-              case '}'.charCodeAt(0):
-                offset = -1;
-              case '{'.charCodeAt(0):
-                if (window.getComputedStyle(this, null).direction == "ltr")
-                  offset *= -1;
-                this.tabContainer.advanceSelectedTab(offset, true);
-                aEvent.preventDefault();
-            }
+          var offset = 1;
+          switch (aEvent.charCode) {
+            case '}'.charCodeAt(0):
+              offset = -1;
+            case '{'.charCodeAt(0):
+              if (window.getComputedStyle(this, null).direction == "ltr")
+                offset *= -1;
+              this.tabContainer.advanceSelectedTab(offset, true);
+              aEvent.preventDefault();
           }
+#endif
         ]]></body>
       </method>
 
@@ -4673,9 +4662,9 @@
           let els = Components.classes["@mozilla.org/eventlistenerservice;1"]
                               .getService(nsIEventListenerService);
           els.addSystemEventListener(document, "keydown", this, false);
-          if (this.AppConstants.platform == "macosx") {
-            els.addSystemEventListener(document, "keypress", this, false);
-          }
+#ifdef XP_MACOSX
+          els.addSystemEventListener(document, "keypress", this, false);
+#endif
           window.addEventListener("sizemodechange", this, false);
 
           var uniqueId = this._generateUniquePanelID();
@@ -4784,19 +4773,10 @@
           let els = Components.classes["@mozilla.org/eventlistenerservice;1"]
                               .getService(nsIEventListenerService);
           els.removeSystemEventListener(document, "keydown", this, false);
-          if (this.AppConstants.platform == "macosx") {
-            els.removeSystemEventListener(document, "keypress", this, false);
-          }
+#ifdef XP_MACOSX
+          els.removeSystemEventListener(document, "keypress", this, false);
+#endif
           window.removeEventListener("sizemodechange", this, false);
-
-          if (gMultiProcessBrowser) {
-            messageManager.removeMessageListener("DOMTitleChanged", this);
-            messageManager.removeMessageListener("contextmenu", this);
-
-            if (this._switcher) {
-              this._switcher.destroy();
-            }
-          }
 
           Services.prefs.removeObserver("accessibility.typeaheadfind", this);
         ]]>
@@ -4805,8 +4785,8 @@
       <!-- Deprecated stuff, implemented for backwards compatibility. -->
       <method name="enterTabbedMode">
         <body>
-          Services.console.logStringMessage("enterTabbedMode is an obsolete method and " +
-                                            "will be removed in a future release.");
+          console.log("enterTabbedMode is an obsolete method and " +
+                      "will be removed in a future release.");
         </body>
       </method>
       <field name="mTabbedMode" readonly="true">true</field>
@@ -5174,7 +5154,11 @@
 
           var tab = this.firstChild;
           tab.label = this.tabbrowser.mStringBundle.getString("tabs.emptyTabTitle");
-          tab.setAttribute("crop", "end");
+          if (Services.prefs.getBoolPref("browser.tabs.fadeLabels")) {
+            tab.setAttribute("crop", "clip");
+          } else {
+            tab.setAttribute("crop", "end");
+          }
           tab.setAttribute("onerror", "this.removeAttribute('image');");
 
           window.addEventListener("resize", this, false);
@@ -5776,10 +5760,6 @@
                     PrivateBrowsingUtils.isWindowPrivate(sourceNode.ownerDocument.defaultView))
                   return "none";
 
-                if (window.gMultiProcessBrowser !=
-                    sourceNode.ownerDocument.defaultView.gMultiProcessBrowser)
-                  return "none";
-
                 return dt.dropEffect == "copy" ? "copy" : "move";
               }
             }
@@ -5969,11 +5949,11 @@
           return;
 
         let wrongModifiers;
-        if (this.tabbrowser.AppConstants.platform == "macosx") {
-          wrongModifiers = !event.metaKey;
-        } else {
-          wrongModifiers = !event.ctrlKey || event.metaKey;
-        }
+#ifdef XP_MACOSX
+        wrongModifiers = !event.metaKey;
+#else
+        wrongModifiers = !event.ctrlKey || event.metaKey;
+#endif
 
         if (wrongModifiers)
           return;
@@ -6036,39 +6016,12 @@
         canvas.height = 90 * scale;
         let toDrag;
         let dragImageOffset = -16;
-        if (gMultiProcessBrowser) {
-          var context = canvas.getContext('2d');
-          context.fillStyle = "white";
-          context.fillRect(0, 0, canvas.width, canvas.height);
-          // Create a panel to use it in setDragImage
-          // which will tell xul to render a panel that follows
-          // the pointer while a dnd session is on.
-          if (!this._dndPanel) {
-            this._dndCanvas = canvas;
-            this._dndPanel = document.createElement("panel");
-            this._dndPanel.className = "dragfeedback-tab";
-            this._dndPanel.setAttribute("type", "drag");
-            let wrapper = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
-            wrapper.style.width = "160px";
-            wrapper.style.height = "90px";
-            wrapper.appendChild(canvas);
-            canvas.style.width = "100%";
-            canvas.style.height = "100%";
-            this._dndPanel.appendChild(wrapper);
-            document.documentElement.appendChild(this._dndPanel);
-          }
-          // PageThumb is async with e10s but that's fine
-          // since we can update the panel during the dnd.
-          PageThumbs.captureToCanvas(browser, canvas);
-          toDrag = this._dndPanel;
-        } else {
-          // For the non e10s case we can just use PageThumbs
-          // sync. No need for xul magic, the native dnd will
-          // be fine, so let's use the canvas for setDragImage.
-          PageThumbs.captureToCanvas(browser, canvas);
-          toDrag = canvas;
-          dragImageOffset = dragImageOffset * scale;
-        }
+        // For the non e10s case we can just use PageThumbs
+        // sync. No need for xul magic, the native dnd will
+        // be fine, so let's use the canvas for setDragImage.
+        PageThumbs.captureToCanvas(browser, canvas);
+        toDrag = canvas;
+        dragImageOffset = dragImageOffset * scale;
         dt.setDragImage(toDrag, dragImageOffset, dragImageOffset);
 
         // _dragData.offsetX/Y give the coordinates that the mouse should be
@@ -6325,10 +6278,10 @@
           window.focus();
         } else {
           let props = { screenX: left, screenY: top };
-          if (this.tabbrowser.AppConstants.platform != "win") {
-            props.outerWidth = winWidth;
-            props.outerHeight = winHeight;
-          }
+#ifndef XP_WIN
+          props.outerWidth = winWidth;
+          props.outerHeight = winHeight;
+#endif
           this.tabbrowser.replaceTabWithWindow(draggedTab, props);
         }
         event.stopPropagation();
@@ -6464,13 +6417,8 @@
           else
             this.removeAttribute("selected");
 
-          // If we're non-e10s we should update the visual selection as well at the same time,
-          // *or* if we're e10s and the visually selected tab isn't changing, in which case the
-          // tab switcher code won't run and update anything else (like the before- and after-
-          // selected attributes).
-          if (!gMultiProcessBrowser || (val && this.hasAttribute("visuallyselected"))) {
-            this._visuallySelected = val;
-          }
+          // If we're non-e10s we should update the visual selection as well at the same time.
+          this._visuallySelected = val;
 
           return val;
         ]]>

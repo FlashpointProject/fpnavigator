@@ -46,3 +46,5 @@ pref("app.update.url.details", "about:");
 
 // Switch Application Updates off for unofficial branding
 pref("app.update.enabled", false);
+
+pref("general.useragent.compatMode.version", "102.0");

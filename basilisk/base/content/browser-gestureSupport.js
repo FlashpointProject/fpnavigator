@@ -81,9 +81,11 @@ var gGestureSupport = {
         break;
       case "MozMagnifyGestureStart":
         aEvent.preventDefault();
-        let pinchPref = AppConstants.platform == "win"
-                        ? def(25, 0)
-                        : def(150, 1);
+#ifdef XP_WIN
+        let pinchPref = def(25, 0);
+#else
+        let pinchPref = def(150, 1);
+#endif
         this._setupGesture(aEvent, "pinch", pinchPref, "out", "in");
         break;
       case "MozRotateGestureStart":
@@ -191,12 +193,12 @@ var gGestureSupport = {
 
     let isVerticalSwipe = false;
     if (aEvent.direction == aEvent.DIRECTION_UP) {
-      if (gMultiProcessBrowser || content.pageYOffset > 0) {
+      if (content.pageYOffset > 0) {
         return false;
       }
       isVerticalSwipe = true;
     } else if (aEvent.direction == aEvent.DIRECTION_DOWN) {
-      if (gMultiProcessBrowser || content.pageYOffset < content.scrollMaxY) {
+      if (content.pageYOffset < content.scrollMaxY) {
         return false;
       }
       isVerticalSwipe = true;
@@ -532,10 +534,6 @@ var gGestureSupport = {
    * image
    */
   restoreRotationState: function() {
-    // Bug 863514 - Make gesture support work in electrolysis
-    if (gMultiProcessBrowser)
-      return;
-
     if (!(content.document instanceof ImageDocument))
       return;
 

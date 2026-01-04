@@ -95,6 +95,9 @@
       <menuitem id="context_unpinTab" label="&unpinTab.label;" hidden="true"
                 accesskey="&unpinTab.accesskey;"
                 oncommand="gBrowser.unpinTab(TabContextMenu.contextTab);"/>
+      <menuitem id="context_duplicateTab" label="&duplicateTab.label;"
+                accesskey="&duplicateTab.accesskey;"
+                oncommand="duplicateTabIn(TabContextMenu.contextTab, 'tab');"/>
       <menuitem id="context_openTabInWindow" label="&moveToNewWindow.label;"
                 accesskey="&moveToNewWindow.accesskey;"
                 tbattr="tabbrowser-multiple"
@@ -611,8 +614,6 @@
                          tooltiptext="&urlbar.webRTCShareScreenNotificationAnchor.tooltip;"/>
                   <image id="servicesInstall-notification-icon" class="notification-anchor-icon service-icon" role="button"
                          tooltiptext="&urlbar.servicesNotificationAnchor.tooltip;"/>
-                  <image id="eme-notification-icon" class="notification-anchor-icon drm-icon" role="button"
-                         tooltiptext="&urlbar.emeNotificationAnchor.tooltip;"/>
                 </box>
                 <image id="tracking-protection-icon"/>
                 <image id="connection-icon"/>

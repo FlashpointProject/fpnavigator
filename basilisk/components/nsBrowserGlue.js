@@ -11,7 +11,6 @@ const XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/AsyncPrefs.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "WindowsUIUtils", "@mozilla.org/windows-ui-utils;1", "nsIWindowsUIUtils");
@@ -81,6 +80,10 @@ const BOOKMARKS_BACKUP_MIN_INTERVAL_DAYS = 1;
 // days we will try to create a new one more aggressively.
 const BOOKMARKS_BACKUP_MAX_INTERVAL_DAYS = 3;
 
+// Use users' idle time to unlink ghost windows and clean up memory.
+// Trigger this by default every 5 minutes.
+const GHOSTBUSTER_INTERVAL = 5 * 60;
+
 // Factory object
 const BrowserGlueServiceFactory = {
   _instance: null,
@@ -96,6 +99,10 @@ const BrowserGlueServiceFactory = {
 
 function BrowserGlue() {
   XPCOMUtils.defineLazyServiceGetter(this, "_idleService",
+                                     "@mozilla.org/widget/idleservice;1",
+                                     "nsIIdleService");
+
+  XPCOMUtils.defineLazyServiceGetter(this, "_ghostBusterService",
                                      "@mozilla.org/widget/idleservice;1",
                                      "nsIIdleService");
 
@@ -118,7 +125,11 @@ function BrowserGlue() {
  * OS X has the concept of zero-window sessions and therefore ignores the
  * browser-lastwindow-close-* topics.
  */
-const OBSERVE_LASTWINDOW_CLOSE_TOPICS = AppConstants.platform != "macosx";
+#ifdef XP_MACOSX
+const OBSERVE_LASTWINDOW_CLOSE_TOPICS = false;
+#else
+const OBSERVE_LASTWINDOW_CLOSE_TOPICS = true;
+#endif
 
 BrowserGlue.prototype = {
   _saveSession: false,
@@ -127,6 +138,7 @@ BrowserGlue.prototype = {
   _isPlacesShutdownObserver: false,
   _isPlacesDatabaseLocked: false,
   _migrationImportsDefaultBookmarks: false,
+  _isGhostBusterObserver: false,
 
   _setPrefToSaveSession: function(aForce) {
     if (!this._saveSession && !aForce)
@@ -241,6 +253,15 @@ BrowserGlue.prototype = {
         break;
       case "idle":
         this._backupBookmarks();
+        if (this._ghostBusterService.idleTime > GHOSTBUSTER_INTERVAL * 1000) {
+          if (Services.prefs.getBoolPref("browser.ghostbuster.enabled", true)) {
+            Cu.unlinkGhostWindows();
+            Cu.forceGC();
+#ifdef DEBUG
+            dump("Unlinking ghost windows + GC has run on idle.\n");
+#endif
+          }
+        }
         break;
       case "distribution-customization-complete":
         Services.obs.removeObserver(this, "distribution-customization-complete");
@@ -380,19 +401,8 @@ BrowserGlue.prototype = {
     os.addObserver(this, "xpi-signature-changed", false);
     os.addObserver(this, "autocomplete-did-enter-text", false);
 
-    if (AppConstants.NIGHTLY_BUILD) {
-      os.addObserver(this, AddonWatcher.TOPIC_SLOW_ADDON_DETECTED, false);
-    }
-
     this._flashHangCount = 0;
     this._firstWindowReady = new Promise(resolve => this._firstWindowLoaded = resolve);
-
-    if (AppConstants.platform == "win" ||
-        AppConstants.platform == "macosx") {
-      // Handles prompting to inform about incompatibilites when accessibility
-      // and e10s are active together.
-      E10SAccessibilityCheck.init();
-    }
   },
 
   // cleanup (called on application shutdown)
@@ -604,9 +614,9 @@ BrowserGlue.prototype = {
   },
 
   _checkForOldBuildUpdates: function () {
+#ifdef MOZ_UPDATER
     // check for update if our build is old
-    if (AppConstants.MOZ_UPDATER &&
-        Services.prefs.getBoolPref("app.update.enabled") &&
+    if (Services.prefs.getBoolPref("app.update.enabled") &&
         Services.prefs.getBoolPref("app.update.checkInstallTime")) {
 
       let buildID = Services.appinfo.appBuildID;
@@ -626,6 +636,7 @@ BrowserGlue.prototype = {
         Cc["@mozilla.org/updates/update-service;1"].getService(Ci.nsIApplicationUpdateService).checkForBackgroundUpdates();
       }
     }
+#endif
   },
 
   _onSafeModeRestart: function() {
@@ -813,16 +824,16 @@ BrowserGlue.prototype = {
     // passively.
     Services.ppmm.loadProcessScript("resource://pdf.js/pdfjschildbootstrap.js", true);
 
-    if (AppConstants.platform == "win") {
-      // For Windows 7, initialize the jump list module.
-      const WINTASKBAR_CONTRACTID = "@mozilla.org/windows-taskbar;1";
-      if (WINTASKBAR_CONTRACTID in Cc &&
-          Cc[WINTASKBAR_CONTRACTID].getService(Ci.nsIWinTaskbar).available) {
-        let temp = {};
-        Cu.import("resource:///modules/WindowsJumpLists.jsm", temp);
-        temp.WinTaskbarJumpList.startup();
-      }
+#ifdef XP_WIN
+    // For Windows 7, initialize the jump list module.
+    const WINTASKBAR_CONTRACTID = "@mozilla.org/windows-taskbar;1";
+    if (WINTASKBAR_CONTRACTID in Cc &&
+        Cc[WINTASKBAR_CONTRACTID].getService(Ci.nsIWinTaskbar).available) {
+      let temp = {};
+      Cu.import("resource:///modules/WindowsJumpLists.jsm", temp);
+      temp.WinTaskbarJumpList.startup();
     }
+#endif
 
     ProcessHangMonitor.init();
 
@@ -843,6 +854,13 @@ BrowserGlue.prototype = {
 
     this._trackSlowStartup();
 
+    // Initialize ghost window idle observer.
+    if (!this._isGhostBusterObserver) {
+      this._ghostBusterService.addIdleObserver(this, GHOSTBUSTER_INTERVAL);
+      // Prevent re-entry.
+      this._isGhostBusterObserver = true;
+    }
+
     // Offer to reset a user's profile if it hasn't been used for 60 days.
     const OFFER_PROFILE_RESET_INTERVAL_MS = 60 * 24 * 60 * 60 * 1000;
     let lastUse = Services.appinfo.replacedLockTime;
@@ -851,7 +869,8 @@ BrowserGlue.prototype = {
     if (!disableResetPrompt && lastUse &&
         Date.now() - lastUse >= OFFER_PROFILE_RESET_INTERVAL_MS) {
       this._resetProfileNotification("unused");
-    } else if (AppConstants.platform == "win" && !disableResetPrompt) {
+#ifdef XP_WIN
+    } else if (!disableResetPrompt) {
       // Check if we were just re-installed and offer Firefox Reset
       let updateChannel;
       try {
@@ -870,6 +889,7 @@ BrowserGlue.prototype = {
           this._resetProfileNotification("uninstall");
         }
       }
+#endif
     }
 
     this._checkForOldBuildUpdates();
@@ -911,9 +931,6 @@ BrowserGlue.prototype = {
     FormValidationHandler.uninit();
     AutoCompletePopup.uninit();
     DateTimePickerHelper.uninit();
-    if (AppConstants.NIGHTLY_BUILD) {
-      AddonWatcher.uninit();
-    }
   },
 
   // All initial windows have opened.
@@ -968,16 +985,17 @@ BrowserGlue.prototype = {
 
     // Perform default browser checking.
     if (ShellService) {
-      let shouldCheck = AppConstants.DEBUG ? false :
-                                             ShellService.shouldCheckDefaultBrowser;
+#ifdef DEBUG
+      let shouldCheck = false;
+#else
+      let shouldCheck = ShellService.shouldCheckDefaultBrowser;
+#endif
 
       const skipDefaultBrowserCheck =
         Services.prefs.getBoolPref("browser.shell.skipDefaultBrowserCheckOnFirstRun") &&
         Services.prefs.getBoolPref("browser.shell.skipDefaultBrowserCheck");
 
-      const usePromptLimit = !AppConstants.RELEASE_OR_BETA;
-      let promptCount =
-        usePromptLimit ? Services.prefs.getIntPref("browser.shell.defaultBrowserCheckCount") : 0;
+      let promptCount = Services.prefs.getIntPref("browser.shell.defaultBrowserCheckCount");
 
       let willRecoverSession = false;
       try {
@@ -1013,12 +1031,12 @@ BrowserGlue.prototype = {
         } else {
           promptCount++;
         }
-        if (usePromptLimit && promptCount > 3) {
+        if (promptCount > 3) {
           willPrompt = false;
         }
       }
 
-      if (usePromptLimit && willPrompt) {
+      if (willPrompt) {
         Services.prefs.setIntPref("browser.shell.defaultBrowserCheckCount", promptCount);
       }
 
@@ -1028,8 +1046,13 @@ BrowserGlue.prototype = {
         }.bind(this), Ci.nsIThread.DISPATCH_NORMAL);
       }
     }
-
-    E10SAccessibilityCheck.onWindowsRestored();
+    // Shut down ghost window idle observer.
+    if (this._isGhostBusterObserver) {
+      this._ghostBusterService.removeIdleObserver(this, GHOSTBUSTER_INTERVAL);
+      this._isGhostBusterObserver = false;
+    }
+    // Do one final unlink to combat shutdown issues.
+    Cu.unlinkGhostWindows();
   },
 
   _onQuitRequest: function(aCancelQuit, aQuitType) {
@@ -1524,7 +1547,7 @@ BrowserGlue.prototype = {
   },
 
   _migrateUI: function() {
-    const UI_VERSION = 43;
+    const UI_VERSION = 45;
     const BROWSER_DOCURL = "chrome://browser/content/browser.xul";
 
     let currentUIVersion;
@@ -1568,20 +1591,20 @@ BrowserGlue.prototype = {
       }
     }
 
-    if (AppConstants.platform == "win") {
-      if (currentUIVersion < 10) {
-        // For Windows systems with display set to > 96dpi (i.e. systemDefaultScale
-        // will return a value > 1.0), we want to discard any saved full-zoom settings,
-        // as we'll now be scaling the content according to the system resolution
-        // scale factor (Windows "logical DPI" setting)
-        let sm = Cc["@mozilla.org/gfx/screenmanager;1"].getService(Ci.nsIScreenManager);
-        if (sm.systemDefaultScale > 1.0) {
-          let cps2 = Cc["@mozilla.org/content-pref/service;1"].
-                     getService(Ci.nsIContentPrefService2);
-          cps2.removeByName("browser.content.full-zoom", null);
-        }
+#ifdef XP_WIN
+    if (currentUIVersion < 10) {
+      // For Windows systems with display set to > 96dpi (i.e. systemDefaultScale
+      // will return a value > 1.0), we want to discard any saved full-zoom settings,
+      // as we'll now be scaling the content according to the system resolution
+      // scale factor (Windows "logical DPI" setting)
+      let sm = Cc["@mozilla.org/gfx/screenmanager;1"].getService(Ci.nsIScreenManager);
+      if (sm.systemDefaultScale > 1.0) {
+        let cps2 = Cc["@mozilla.org/content-pref/service;1"].
+                    getService(Ci.nsIContentPrefService2);
+        cps2.removeByName("browser.content.full-zoom", null);
       }
     }
+#endif
 
     if (currentUIVersion < 11) {
       Services.prefs.clearUserPref("dom.disable_window_move_resize");
@@ -1856,6 +1879,20 @@ BrowserGlue.prototype = {
       }
       Services.prefs.clearUserPref("layers.acceleration.disabled");
       Services.prefs.clearUserPref("layers.acceleration.force-enabled");
+    }
+
+    if (currentUIVersion < 44) {
+      // DoNotTrack is now GPC. Carry across user preference.
+      if (Services.prefs.prefHasUserValue("privacy.donottrackheader.enabled")) {
+        let DNTEnabled = Services.prefs.getBoolPref("privacy.donottrackheader.enabled");
+        Services.prefs.setBoolPref("privacy.GPCheader.enabled", DNTEnabled);
+        Services.prefs.clearUserPref("privacy.donottrackheader.enabled");
+      }
+    }
+
+    if (currentUIVersion < 45) {
+      // Clear hardware decoding failure flag to re-test. (UXP #1898)
+      Services.prefs.clearUserPref("media.hardware-video-decoding.failed");
     }
 
     // Update the migration version.
@@ -2253,16 +2290,16 @@ var DefaultBrowserCheck = {
   setAsDefault: function() {
     let claimAllTypes = true;
     let setAsDefaultError = false;
-    if (AppConstants.platform == "win") {
-      try {
-        // In Windows 8+, the UI for selecting default protocol is much
-        // nicer than the UI for setting file type associations. So we
-        // only show the protocol association screen on Windows 8+.
-        // Windows 8 is version 6.2.
-        let version = Services.sysinfo.getProperty("version");
-        claimAllTypes = (parseFloat(version) < 6.2);
-      } catch (ex) { }
-    }
+#ifdef XP_WIN
+    try {
+      // In Windows 8+, the UI for selecting default protocol is much
+      // nicer than the UI for setting file type associations. So we
+      // only show the protocol association screen on Windows 8+.
+      // Windows 8 is version 6.2.
+      let version = Services.sysinfo.getProperty("version");
+      claimAllTypes = (parseFloat(version) < 6.2);
+    } catch (ex) { }
+#endif
     try {
       ShellService.setDefaultBrowser(claimAllTypes, false);
 
@@ -2414,128 +2451,6 @@ var DefaultBrowserCheck = {
       popup.remove();
       delete this._notification;
     }
-  },
-};
-
-var E10SAccessibilityCheck = {
-  // tracks when an a11y init observer fires prior to the
-  // first window being opening.
-  _wantsPrompt: false,
-
-  init: function() {
-    Services.obs.addObserver(this, "a11y-init-or-shutdown", true);
-    Services.obs.addObserver(this, "quit-application-granted", true);
-  },
-
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference]),
-
-  get forcedOn() {
-    try {
-      return Services.prefs.getBoolPref("browser.tabs.remote.force-enable");
-    } catch (e) {}
-    return false;
-  },
-
-  observe: function(subject, topic, data) {
-    switch (topic) {
-      case "quit-application-granted":
-        // Tag the profile with a11y load state. We use this in nsAppRunner
-        // checks on the next start.
-        Services.prefs.setBoolPref("accessibility.loadedInLastSession",
-                                   Services.appinfo.accessibilityEnabled);
-        break;
-      case "a11y-init-or-shutdown":
-        if (data == "1") {
-          // Update this so users can check this while still running
-          Services.prefs.setBoolPref("accessibility.loadedInLastSession", true);
-          this._showE10sAccessibilityWarning();
-        }
-        break;
-    }
-  },
-
-  onWindowsRestored: function() {
-    if (this._wantsPrompt) {
-      this._wantsPrompt = false;
-      this._showE10sAccessibilityWarning();
-    }
-  },
-
-  _warnedAboutAccessibility: false,
-
-  _showE10sAccessibilityWarning: function() {
-    // We don't prompt about a11y incompat if e10s is off.
-    if (!Services.appinfo.browserTabsRemoteAutostart) {
-      return;
-    }
-
-    // If the user set the forced pref and it's true, ignore a11y init.
-    // If the pref doesn't exist or if it's false, prompt.
-    if (this.forcedOn) {
-      return;
-    }
-
-    // Only prompt once per session
-    if (this._warnedAboutAccessibility) {
-      return;
-    }
-    this._warnedAboutAccessibility = true;
-
-    let win = RecentWindow.getMostRecentBrowserWindow();
-    if (!win || !win.gBrowser || !win.gBrowser.selectedBrowser) {
-      Services.console.logStringMessage(
-          "Accessibility support is partially disabled due to compatibility issues with new features.");
-      this._wantsPrompt = true;
-      this._warnedAboutAccessibility = false;
-      return;
-    }
-    let browser = win.gBrowser.selectedBrowser;
-
-    // We disable a11y for content and prompt on the chrome side letting
-    // a11y users know they need to disable e10s and restart.
-    let promptMessage = win.gNavigatorBundle.getFormattedString(
-                          "e10s.accessibilityNotice.mainMessage2",
-                          [gBrandBundle.GetStringFromName("brandShortName")]
-                        );
-    let notification;
-    let restartCallback  = function() {
-      let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"].createInstance(Ci.nsISupportsPRBool);
-      Services.obs.notifyObservers(cancelQuit, "quit-application-requested", "restart");
-      if (cancelQuit.data) {
-        return; // somebody canceled our quit request
-      }
-      // Restart the browser
-      Services.startup.quit(Services.startup.eAttemptQuit | Services.startup.eRestart);
-    };
-    // main option: an Ok button, keeps running with content accessibility disabled
-    let mainAction = {
-      label: win.gNavigatorBundle.getString("e10s.accessibilityNotice.acceptButton.label"),
-      accessKey: win.gNavigatorBundle.getString("e10s.accessibilityNotice.acceptButton.accesskey"),
-      callback: function () {
-        // If the user invoked the button option remove the notification,
-        // otherwise keep the alert icon around in the address bar.
-        notification.remove();
-      },
-      dismiss: true
-    };
-    // secondary option: a restart now button. When we restart e10s will be disabled due to
-    // accessibility having been loaded in the previous session.
-    let secondaryActions = [{
-      label: win.gNavigatorBundle.getString("e10s.accessibilityNotice.enableAndRestart.label"),
-      accessKey: win.gNavigatorBundle.getString("e10s.accessibilityNotice.enableAndRestart.accesskey"),
-      callback: restartCallback,
-    }];
-    let options = {
-      popupIconURL: "chrome://browser/skin/e10s-64@2x.png",
-      learnMoreURL: Services.urlFormatter.formatURLPref("app.support.e10sAccessibilityUrl"),
-      persistWhileVisible: true,
-      hideNotNow: true,
-    };
-
-    notification =
-      win.PopupNotifications.show(browser, "a11y_enabled_with_e10s",
-                                  promptMessage, null, mainAction,
-                                  secondaryActions, options);
   },
 };
 
