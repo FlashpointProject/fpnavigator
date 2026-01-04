@@ -15,9 +15,9 @@ jobs:
       fail-fast: false
       matrix:
         config:
-        #- name: Windows-Win64
-        #  win: win64
-        #  arch: x86_64
+        - name: Windows-Win64
+          win: win64
+          arch: x86_64
 
         - name: Windows-Win32
           win: win32
@@ -75,5 +75,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: fpnavigator-windows-${{ matrix.config.win }}
-          path: obj-${{ matrix.config.arch }}-pc-mingw32/dist/fpnavigator-*
+          name: flashpointnavigator-windows-${{ matrix.config.win }}
+          path: obj-${{ matrix.config.arch }}-pc-mingw32/dist/flashpointnavigator-*
