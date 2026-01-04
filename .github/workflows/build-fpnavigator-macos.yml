@@ -1,4 +1,4 @@
-name: Build Basilisk MacOS
+name: Build fpnavigator MacOS
 
 on:
   workflow_dispatch:
@@ -8,8 +8,9 @@ on:
       - release
 
 jobs:
-  build-basilisk:
-    name: Build Basilisk MacOS -  ${{ matrix.config.name }}
+  build-fpnavigator:
+    if: false
+    name: Build fpnavigator MacOS -  ${{ matrix.config.name }}
     runs-on: macos-latest
     strategy:
       fail-fast: false
@@ -48,7 +49,7 @@ jobs:
       - name: Copy mozconfig
         run: cp mozconfigs/macos/${{ matrix.config.arch }}/macos-${{ matrix.config.arch }}-mozconfig .mozconfig
 
-      - name: Build Basilisk
+      - name: Build fpnavigator
         run: |
           # Use Python 2 we installed earler
           export PATH="$(pyenv root)/shims:${PATH}"
@@ -59,7 +60,7 @@ jobs:
           
       - uses: actions/upload-artifact@v4
         with:
-          name: basilisk-macos-${{ matrix.config.arch }}
+          name: fpnavigator-macos-${{ matrix.config.arch }}
           path: |
             obj-${{ matrix.config.compiler-arch }}-apple-darwin/dist/*.app
-            obj-${{ matrix.config.compiler-arch }}-apple-darwin/dist/basilisk-*
+            obj-${{ matrix.config.compiler-arch }}-apple-darwin/dist/fpnavigator-*

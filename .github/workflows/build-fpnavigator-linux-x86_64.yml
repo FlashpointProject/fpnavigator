@@ -1,4 +1,4 @@
-name: Build Basilisk Linux x86_64
+name: Build fpnavigator Linux x86_64
 
 on:  
   workflow_dispatch:
@@ -8,8 +8,9 @@ on:
       - release
 
 jobs:
-  build-basilisk:
-    name: Build Basilisk Linux ${{ matrix.config.name }}
+  build-fpnavigator:
+    if: false
+    name: Build fpnavigator Linux ${{ matrix.config.name }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -35,22 +36,6 @@ jobs:
       - name: Copy mozconfig
         run: cp mozconfigs/linux/${{ matrix.config.arch }}/${{ matrix.config.gtk }}_unofficial_branding.mozconfig .mozconfig
 
-      - name: Update mozconfig for release branch
-        if: github.ref == 'refs/heads/release'
-        run: |
-          sed -i 's/disable-updater/enable-updater/g' .mozconfig
-          sed -i 's/disable-official-branding/enable-official-branding/g' .mozconfig
-
-      - name: Pull official branding files for release branch
-        if: github.ref == 'refs/heads/release'
-        run: |
-          cd basilisk/branding && git clone https://${{ secrets.RPMO_CLONE_CREDENTIALS }}@repo.palemoon.org/Basilisk-Dev/${{ secrets.OFFICIAL_BRANDING_REPO_NAME }}.git official
-
-      - name: Update docker build script for release branch
-        if: github.ref == 'refs/heads/release'
-        run: |
-          echo 'su -c "./mach mar" $USERNAME' >> build-scripts/linux/build_basilisk_subscripts/run_inside_docker.sh
-
       # Restore ccache cache
       - name: Restore CCache Cache
         uses: actions/cache@v4
@@ -60,13 +45,13 @@ jobs:
           key: ${{ runner.os }}-ccache-${{ github.ref }}-${{ matrix.config.gtk }}-${{ matrix.config.arch }}-${{ github.run_id }}
           restore-keys: ${{ runner.os }}-ccache-${{ github.ref }}-${{ matrix.config.gtk }}-${{ matrix.config.arch }}
 
-      - name: Build Basilisk
-        run: ./build-scripts/linux/build_basilisk.sh
+      - name: Build fpnavigator
+        run: ./build-scripts/linux/build_fpnavigator.sh
 
       - uses: actions/upload-artifact@v4
         with:
-          name: basilisk-linux-${{ matrix.config.arch }}-${{ matrix.config.gtk }}
-          path: obj-${{ matrix.config.arch }}-pc-linux-gnu/dist/basilisk-*
+          name: fpnavigator-linux-${{ matrix.config.arch }}-${{ matrix.config.gtk }}
+          path: obj-${{ matrix.config.arch }}-pc-linux-gnu/dist/fpnavigator-*
 
       # Save ccache cache
       - name: Save CCache Cache
