@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - master
-      - upgrade
 
 jobs:
   build-fpnavigator-windows:
@@ -15,10 +14,6 @@ jobs:
       fail-fast: false
       matrix:
         config:
-        - name: Windows-Win64
-          win: win64
-          arch: x86_64
-
         - name: Windows-Win32
           win: win32
           arch: i686
